@@ -16,7 +16,6 @@
 */
 
 include { AUTOPOLISH  } from './workflows/autopolish'
-include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_autopolish_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_autopolish_pipeline'
 include { UTILS_NFCORE_PIPELINE   } from './subworkflows/nf-core/utils_nfcore_pipeline'
 include { UTILS_NEXTFLOW_PIPELINE } from './subworkflows/nf-core/utils_nextflow_pipeline'
@@ -32,11 +31,13 @@ include { UTILS_NEXTFLOW_PIPELINE } from './subworkflows/nf-core/utils_nextflow_
 workflow NFCORE_AUTOPOLISH {
 
     main:
-
     //
     // WORKFLOW: Run pipeline
     //
     AUTOPOLISH ()
+
+    emit:
+    versions = AUTOPOLISH.out.versions
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -47,24 +48,25 @@ workflow NFCORE_AUTOPOLISH {
 workflow {
 
     main:
-    //
-    // SUBWORKFLOW: Run initialisation tasks
-    //
-    PIPELINE_INITIALISATION (
-        params.version,
-        params.validate_params,
-        params.monochrome_logs,
-        args,
-        params.outdir,
-        params.input
-    )
-
+    // 
+    // Print version and exit if required, dump params to JSON  
+    //  
+    UTILS_NEXTFLOW_PIPELINE (  
+            params.version,
+            true,  
+            params.outdir,  
+            workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1
+    )  
+    //  
+    // Check config provided to the pipeline  
+    //  
+    UTILS_NFCORE_PIPELINE (  
+        args
+    )   
     //
     // WORKFLOW: Run main workflow
     //
-    NFCORE_AUTOPOLISH (
-        PIPELINE_INITIALISATION.out.samplesheet
-    )
+    NFCORE_ONTLONGREADASSEMBLY ()
     //
     // SUBWORKFLOW: Run completion tasks
     //
