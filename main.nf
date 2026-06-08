@@ -66,7 +66,7 @@ workflow {
     //
     // WORKFLOW: Run main workflow
     //
-    NFCORE_ONTLONGREADASSEMBLY ()
+    NFCORE_AUTPOLISH ()
     //
     // SUBWORKFLOW: Run completion tasks
     //
