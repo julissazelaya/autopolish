@@ -6,6 +6,8 @@ lint:
   files_unchanged:
     - .github/CONTRIBUTING.md
     - assets/sendmail_template.txt
+    - ro-crate-metadata.json
+  rocrate_metadata_validation: False
   nextflow_config: false
   multiqc_config: false
   files_exist:

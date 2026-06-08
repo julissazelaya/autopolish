@@ -1,0 +1,15 @@
+---
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/environment-schema.json
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- bioconda::autocycler=0.6.2
+- bioconda::canu=2.3
+- bioconda::flye=2.9.6
+- bioconda::necat=0.0.1_update20200803
+- bioconda::nextdenovo=2.5.2
+- bioconda::raven-assembler=1.8.3
+- pip
+- pip:
+  - plassembler==1.8.2

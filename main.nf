@@ -18,6 +18,8 @@
 include { AUTOPOLISH  } from './workflows/autopolish'
 include { PIPELINE_INITIALISATION } from './subworkflows/local/utils_nfcore_autopolish_pipeline'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_autopolish_pipeline'
+include { UTILS_NFCORE_PIPELINE   } from './subworkflows/nf-core/utils_nfcore_pipeline'
+include { UTILS_NEXTFLOW_PIPELINE } from './subworkflows/nf-core/utils_nextflow_pipeline'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOWS FOR PIPELINE
@@ -29,17 +31,12 @@ include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_auto
 //
 workflow NFCORE_AUTOPOLISH {
 
-    take:
-    samplesheet // channel: samplesheet read in from --input
-
     main:
 
     //
     // WORKFLOW: Run pipeline
     //
-    AUTOPOLISH (
-        samplesheet
-    )
+    AUTOPOLISH ()
 }
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
