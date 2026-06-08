@@ -122,7 +122,7 @@ workflow DRAFT_ASSEMBLY {
             .mix(raven_assembly.fasta)
             .map { meta, fasta -> [ meta.barcode, fasta ] }
             .groupTuple(remainder: true)
-            .map { barcode, fastas -> [ [id: barcode], fastas ] }}
+            .map { barcode, fastas -> [ [id: barcode], fastas ] }
 
         assemblies = COLLECT_ASSEMBLIES(ch_all_assemblies)
 
@@ -130,7 +130,7 @@ workflow DRAFT_ASSEMBLY {
         subsampled_reads = subsampled.subsampled_reads
         assemblies       = assemblies.assemblies
         normalized_reads = ch_reads_flat
-
+}
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
