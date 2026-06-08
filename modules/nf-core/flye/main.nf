@@ -12,9 +12,9 @@ process FLYE {
     val mode
 
     output:
-    tuple val(meta), path("*.fasta.gz"), emit: fasta
-    tuple val(meta), path("*.gfa.gz")  , emit: gfa
-    tuple val(meta), path("*.gv.gz")   , emit: gv
+    tuple val(meta), path("*.fasta"), emit: fasta
+    tuple val(meta), path("*.gfa")  , emit: gfa
+    tuple val(meta), path("*.gv")   , emit: gv
     tuple val(meta), path("*.txt")     , emit: txt
     tuple val(meta), path("*.log")     , emit: log
     tuple val(meta), path("*.json")    , emit: json

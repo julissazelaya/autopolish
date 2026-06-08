@@ -1,0 +1,36 @@
+Changes in module 'nf-core/flye'
+Changes in 'flye/main.nf':
+--- modules/nf-core/flye/main.nf
++++ modules/nf-core/flye/main.nf
+@@ -12,9 +12,9 @@
+     val mode
+ 
+     output:
+-    tuple val(meta), path("*.fasta.gz"), emit: fasta
+-    tuple val(meta), path("*.gfa.gz")  , emit: gfa
+-    tuple val(meta), path("*.gv.gz")   , emit: gv
++    tuple val(meta), path("*.fasta"), emit: fasta
++    tuple val(meta), path("*.gfa")  , emit: gfa
++    tuple val(meta), path("*.gv")   , emit: gv
+     tuple val(meta), path("*.txt")     , emit: txt
+     tuple val(meta), path("*.log")     , emit: log
+     tuple val(meta), path("*.json")    , emit: json
+@@ -48,9 +48,9 @@
+     stub:
+     def prefix = task.ext.prefix ?: "${meta.id}"
+     """
+-    echo stub | gzip -c > ${prefix}.assembly.fasta.gz
+-    echo stub | gzip -c > ${prefix}.assembly_graph.gfa.gz
+-    echo stub | gzip -c > ${prefix}.assembly_graph.gv.gz
++    touch ${prefix}.assembly.fasta
++    touch ${prefix}.assembly_graph.gfa
++    touch ${prefix}.assembly_graph.gv
+     echo contig_1 > ${prefix}.assembly_info.txt
+     echo stub > ${prefix}.flye.log
+     echo stub > ${prefix}.params.json
+
+'modules/nf-core/flye/meta.yml' is unchanged
+'modules/nf-core/flye/environment.yml' is unchanged
+'modules/nf-core/flye/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/flye/tests/main.nf.test' is unchanged
+************************************************************
