@@ -89,8 +89,8 @@ workflow DRAFT_ASSEMBLY {
         -------------------------------
         */
         flye_assembly     = FLYE(ch_assembler_reads, params.flye_mode)
-        metamdbg_assembly = METAMDBG_ASM(ch_assembler_reads, params.metamdbg_input_type)
-        metamdbg_assembly = AUTOCYCLER_METAMDBGFILTER(metamdbg_assembly.assembly)
+        metamdbg_assembly  = METAMDBG_ASM(ch_assembler_reads, params.metamdbg_input_type)
+        metamdbg_filtered  = AUTOCYCLER_METAMDBGFILTER(metamdbg_assembly.contigs)
         raven_assembly    = RAVEN(ch_assembler_reads)
         miniasm_assembly  = AUTOCYCLER_MINIASM(ch_assembler_reads, ch_assembler_genomesize)
 
@@ -116,13 +116,13 @@ workflow DRAFT_ASSEMBLY {
         )
 
         ch_all_assemblies = flye_weighted.fasta
-            .mix(metamdbg_assembly.contigs)
+            .mix(metamdbg_filtered.fasta)
             .mix(miniasm_assembly.fasta)
             .mix(plassembler_weighted.fasta)
             .mix(raven_assembly.fasta)
             .map { meta, fasta -> [ meta.barcode, fasta ] }
             .groupTuple(remainder: true)
-            .map { barcode, fastas -> [ [id: barcode], fastas ] }
+            .map { barcode, fastas -> [ [id: barcode], fastas ] }}
 
         assemblies = COLLECT_ASSEMBLIES(ch_all_assemblies)
 
