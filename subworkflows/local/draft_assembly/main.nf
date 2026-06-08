@@ -130,7 +130,7 @@ workflow DRAFT_ASSEMBLY {
         subsampled_reads = subsampled.subsampled_reads
         assemblies       = assemblies.assemblies
         normalized_reads = ch_reads_flat
-}
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
