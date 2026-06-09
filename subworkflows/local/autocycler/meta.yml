@@ -13,6 +13,7 @@ keywords:
   - dnaapler
   - gfa
 components:
+  - autocycler/subsample
   - autocycler/cluster
   - autocycler/combine
   - autocycler/compress
