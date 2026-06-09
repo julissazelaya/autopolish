@@ -28,11 +28,15 @@ workflow AUTOPOLISH {
     Input handling
     ----------------------------------------
     */
-    if (params.fastq) {
-        /*
-        FASTQ input mode — skip basecalling and demultiplexing
-        */
-        channel.fromPath("${params.fastq}/*.fastq*", checkIfExists: true)
+    if (!params.input)      error "Please provide --input"
+    if (!params.input_type) error "Please provide --input_type: fastq, pod5, or bam"
+    if (!['fastq', 'pod5', 'bam'].contains(params.input_type))
+        error "Invalid --input_type '${params.input_type}': must be fastq, pod5, or bam"
+    if (params.input_type == 'pod5' && !params.barcode_kit)
+        error "Please provide --barcode_kit when using --input_type pod5"
+
+    if (params.input_type == 'fastq') {
+        channel.fromPath("${params.input}/*.fastq*", checkIfExists: true)
             .map { fastq ->
                 def barcode_id = fastq.name.toString()
                     .replaceAll('.bam.fastq', '')
@@ -42,28 +46,22 @@ workflow AUTOPOLISH {
             }
             .filter { meta, fastq -> !fastq.name.contains('unclassified') }
             .set { ch_reads }
-    } else if (params.bam) {
-        /*
-        BAM input mode — skip basecalling, feed existing BAMs into demux
-        */
-        channel.fromPath("${params.bam}/*.bam", checkIfExists: true)
+
+    } else if (params.input_type == 'bam') {
+        channel.fromPath("${params.input}/*.bam", checkIfExists: true)
             .map { bam -> [ [id: 'merged'], bam ] }
             .groupTuple()
             .set { ch_bam_input }
         demuxed  = DEMUX(ch_bam_input)
         ch_reads = demuxed.reads
-    } else if (params.pod5) {
-        /*
-        pod5 input mode — full pipeline from raw signal files
-        */
-        channel.fromPath("${params.pod5}/*.pod5", checkIfExists: true)
+
+    } else if (params.input_type == 'pod5') {
+        channel.fromPath("${params.input}/*.pod5", checkIfExists: true)
             .map { file -> [ [id: file.baseName], file ] }
             .set { ch_pod5 }
         basecalled = BASECALLING(ch_pod5)
         demuxed    = DEMUX(basecalled.bam)
         ch_reads   = demuxed.reads
-    } else {
-        error "Please specify either --pod5, --bam, or --fastq as input"
     }
     /*
     ----------------------------------------

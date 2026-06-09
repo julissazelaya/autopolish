@@ -21,17 +21,18 @@
 
 ## Introduction
 
-**nf-core/autopolish** is a bioinformatics pipeline that ...
+**nf-core/autopolish** is a bioinformatics pipeline for automated end-to-end assembly of bacterial genomes. It was developed at the Walter Reed Army Institute of Research (WRAIR) Multidrug-Resistant Organism Repository and Surveillance Network (MRSN) to support high-throughput bacterial genome assembly from ONT data that is short-read agnostic. The automation performs basecalling, demultiplexing, genome assembly, and polishing to produce high-quality finished bacterial genome assemblies.
 
-<!-- TODO nf-core:
-   Complete this sentence with a 2-3 sentence summary of what types of data the pipeline ingests, a brief overview of the
-   major pipeline sections and the types of output it produces. You're giving an overview to someone new
-   to nf-core here, in 15-20 seconds. For an example, see https://github.com/nf-core/rnaseq/blob/master/README.md#introduction
--->
+1. Basecalling — Converts raw pod5 signal files to BAM format using Dorado with the SUP (super accuracy) basecalling model
+2. Demultiplexing — Merges individual BAM files and demultiplexes by barcode using Dorado demux, producing per-barcode FASTQ files
+3. Draft Assembly — Estimates genome size and generates multiple independent draft assemblies per barcode using Autocycler helper wrappers for six assemblers: Flye, metaMDBG, Miniasm, Plassembler, and Raven
+4. Consensus Assembly — Compresses, clusters, trims, resolves, and combines draft assemblies into a consensus assembly using Autocycler, followed by reorientation with Dnaapler
+5. Alignment — Aligns reads back to the consensus assembly using Dorado aligner, adds read group tags, and indexes the alignment
+6. Polishing — Polishes the consensus assembly using long reads with Dorado polish
+
 
 <!-- TODO nf-core: Include a figure that guides the user through the major workflow steps. Many nf-core
      workflows use the "tube map" design for that. See https://nf-co.re/docs/guidelines/graphic_design/workflow_diagrams#examples for examples.   -->
-<!-- TODO nf-core: Fill in short bullet-pointed list of the default steps in the pipeline -->
 
 ## Usage
 
