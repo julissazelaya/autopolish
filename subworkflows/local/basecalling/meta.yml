@@ -1,36 +1,36 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "basecalling"
-## TODO nf-core: Add a description of the subworkflow and list keywords
-description: Sort SAM/BAM/CRAM file
+description: Basecall Oxford Nanopore POD5 files with Dorado
 keywords:
-  - sort
+  - basecalling
+  - nanopore
+  - ont
+  - dorado
+  - pod5
   - bam
-  - sam
-  - cram
-## TODO nf-core: Add a list of the modules and/or subworkflows used in the subworkflow
+  - long reads
 components:
-  - samtools/sort
-  - samtools/index
-## TODO nf-core: List all of the channels used as input with a description and their structure
+  - dorado/basecaller
+  - dorado_demux
+  - samtools/merge
 input:
-  - ch_bam:
+  - pod5:
       type: file
       description: |
-        The input channel containing the BAM/CRAM/SAM files
-        Structure: [ val(meta), path(bam) ]
-      pattern: "*.{bam/cram/sam}"
-## TODO nf-core: List all of the channels used as output with a descriptions and their structure
+        Oxford Nanopore POD5 files to be basecalled with Dorado.
+        Structure: [ val(meta), path(pod5) ]
+      pattern: "*.{pod5}"
 output:
   - bam:
       type: file
       description: |
-        Channel containing BAM files
+        Dorado basecalled BAM files merged across all POD5 inputs into a single BAM file.
         Structure: [ val(meta), path(bam) ]
       pattern: "*.bam"
   - bai:
       type: file
       description: |
-        Channel containing indexed BAM (BAI) files
+        Index file associated with the merged BAM output.
         Structure: [ val(meta), path(bai) ]
       pattern: "*.bai"
   - csi:
@@ -38,7 +38,7 @@ output:
       description: |
         Channel containing CSI files
         Structure: [ val(meta), path(csi) ]
-      pattern: "*.csi"
+      pattern: "*.csi" 
   - versions:
       type: file
       description: |

@@ -1,44 +1,54 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "draft_assembly"
-## TODO nf-core: Add a description of the subworkflow and list keywords
-description: Sort SAM/BAM/CRAM file
+description: Generate draft genome assemblies from Oxford Nanopore long-read data using multiple assemblers for downstream Autocycler consensus generation.
 keywords:
-  - sort
-  - bam
-  - sam
-  - cram
-## TODO nf-core: Add a list of the modules and/or subworkflows used in the subworkflow
+  - genome assembly
+  - long-read sequencing
+  - nanopore
+  - autocycler
+  - bacterial genomes
 components:
-  - samtools/sort
-  - samtools/index
-## TODO nf-core: List all of the channels used as input with a description and their structure
+  - autocycler/genomesize
+  - autocycler/subsample
+  - autocycler/miniasm
+  - autocycler/weight
+  - autocycler/metamdbgfilter
+  - flye
+  - metamdbg/asm
+  - plassembler/long
+  - raven
 input:
-  - ch_bam:
-      type: file
+  - reads:
+      type: tuple
       description: |
-        The input channel containing the BAM/CRAM/SAM files
-        Structure: [ val(meta), path(bam) ]
-      pattern: "*.{bam/cram/sam}"
-## TODO nf-core: List all of the channels used as output with a descriptions and their structure
+        Demultiplexed Oxford Nanopore FASTQ reads grouped by barcode.
+        Structure: [ val(meta), path(fastq) ]
+      pattern: "*.{fastq.gz,fastq}"
 output:
-  - bam:
-      type: file
+  - subsampled_reads:
+      type: tuple
       description: |
-        Channel containing BAM files
-        Structure: [ val(meta), path(bam) ]
-      pattern: "*.bam"
-  - bai:
-      type: file
+        Four Autocycler subsampled read sets per barcode for independent assembly generation.
+        Structure: [ val(meta), path(subsampled_fastqs[]) ]
+      pattern: "*.fastq.gz"
+  - assemblies:
+      type: tuple
       description: |
-        Channel containing indexed BAM (BAI) files
-        Structure: [ val(meta), path(bai) ]
-      pattern: "*.bai"
+        Collection of assembler outputs (Flye, MetaMDBG, Miniasm, Plassembler, Raven) grouped by barcode.
+        Structure: [ val(meta), path(assemblies[]) ]
+      pattern: "*.fasta"
+  - normalized_reads:
+      type: tuple
+      description: |
+        Input FASTQ reads reformatted to one FASTQ file per barcode.
+        Structure: [ val(meta), path(fastq) ]
+      pattern: "*.fastq"
   - csi:
       type: file
       description: |
         Channel containing CSI files
         Structure: [ val(meta), path(csi) ]
-      pattern: "*.csi"
+      pattern: "*.csi" 
   - versions:
       type: file
       description: |

@@ -1,38 +1,45 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/subworkflows/yaml-schema.json
 name: "autocycler"
-## TODO nf-core: Add a description of the subworkflow and list keywords
-description: Sort SAM/BAM/CRAM file
+description: Generates a consensus assembly from multiple draft assemblies using
+  the Autocycler workflow. Assemblies are compressed, clustered,
+  trimmed, resolved, combined into a consensus graph, reoriented with
+  Dnaapler, and converted to FASTA format for downstream analysis.
 keywords:
-  - sort
-  - bam
-  - sam
-  - cram
-## TODO nf-core: Add a list of the modules and/or subworkflows used in the subworkflow
+  - autocycler
+  - consensus assembly
+  - long-read
+  - nanopore
+  - genome assembly
+  - dnaapler
+  - gfa
 components:
-  - samtools/sort
-  - samtools/index
-## TODO nf-core: List all of the channels used as input with a description and their structure
+  - autocycler/cluster
+  - autocycler/combine
+  - autocycler/compress
+  - autocycler/resolve
+  - autocycler/trim
+  - autocycler/gfa2fasta
+  - dnaapler
 input:
-  - ch_bam:
-      type: file
+  - assemblies:
+      type: tuple
       description: |
-        The input channel containing the BAM/CRAM/SAM files
-        Structure: [ val(meta), path(bam) ]
-      pattern: "*.{bam/cram/sam}"
-## TODO nf-core: List all of the channels used as output with a descriptions and their structure
+        Collection of draft assemblies grouped by barcode for consensus generation
+        Structure: [ val(meta), path(fasta) ]
+      pattern: "*.{fasta}"
 output:
-  - bam:
-      type: file
+  - consensus_assembly:
+      type: tuple
       description: |
-        Channel containing BAM files
-        Structure: [ val(meta), path(bam) ]
-      pattern: "*.bam"
-  - bai:
-      type: file
+        Final Autocycler consensus assembly after Dnaapler reorientation and GFA-to-FASTA conversion
+        Structure: [ val(meta), path(fasta) ]
+      pattern: "*.fasta"
+  - consensus_stats:
+      type: tuple
       description: |
-        Channel containing indexed BAM (BAI) files
-        Structure: [ val(meta), path(bai) ]
-      pattern: "*.bai"
+        Summary statistics generated during the Autocycler combine step
+        Structure: [ val(meta), path(stats) ]
+      pattern: "*.tsv"
   - csi:
       type: file
       description: |
