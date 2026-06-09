@@ -28,6 +28,11 @@ workflow AUTOPOLISH {
     Input handling
     ----------------------------------------
     */
+    if (params.help) {
+    log.info helpText()
+    exit 0
+    }
+    
     if (!params.input)      error "Please provide --input"
     if (!params.input_type) error "Please provide --input_type: fastq, pod5, or bam"
     if (!['fastq', 'pod5', 'bam'].contains(params.input_type))

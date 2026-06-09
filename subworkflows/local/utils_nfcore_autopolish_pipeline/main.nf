@@ -153,6 +153,100 @@ def validateInputSamplesheet(input) {
     return [ metas[0], fastqs ]
 }
 //
+/// Generate help text for the pipeline
+//
+def helpText() {
+    return """
+    =========================================
+     nf-core/autopolish
+    =========================================
+    Automated bacterial genome assembly and polishing from Oxford Nanopore long-read data.
+
+    Usage:
+        nextflow run main.nf --input <dir> --input_type <type> --outdir <dir> [options]
+
+    -----------------------------------------------------------------------
+    REQUIRED
+    -----------------------------------------------------------------------
+        --input             Path to directory containing input files
+        --input_type        Input file type: 'fastq', 'bam', or 'pod5'
+        --outdir            Path to output directory
+
+    -----------------------------------------------------------------------
+    BASECALLING & DEMULTIPLEXING  (pod5 input only)
+    -----------------------------------------------------------------------
+        --barcode_kit       Barcode kit used for demultiplexing [required for pod5]
+                            e.g. 'SQK-NBD114-96'
+        --dorado_model      Dorado basecalling model
+                            [default: dna_r10.4.1_e8.2_400bps_sup@v5.2.0]
+        --dorado_models_dir Path to local Dorado models directory
+                            [default: /mrsnStorage/resources/dorado_models]
+        --dorado_modifications
+                            Dorado modification calling model [default: null]
+
+    -----------------------------------------------------------------------
+    ASSEMBLY
+    -----------------------------------------------------------------------
+        --min_read_depth    Minimum read depth for assembly [default: 50]
+        --read_type         Read type passed to assemblers [default: ont_r10]
+        --flye_mode         Flye assembly mode [default: --nano-hq]
+        --canu_mode         Canu assembly mode [default: -nanopore]
+        --metamdbg_input_type
+                            metaMDBG input type [default: ont]
+        --plassembler_db    Path to Plassembler database
+                            [default: /mrsnStorage/resources/plassembler]
+
+    -----------------------------------------------------------------------
+    ALIGNMENT
+    -----------------------------------------------------------------------
+        --rg_tag            Read group tag for BAM header
+                            [default: 'ID:A\\tDS:basecall_model=dna_r10.4.1_e8.2_400bps_sup@v5.2.0']
+
+    -----------------------------------------------------------------------
+    RESOURCES
+    -----------------------------------------------------------------------
+        --threads           Number of threads [default: 96]
+
+    -----------------------------------------------------------------------
+    BOILERPLATE
+    -----------------------------------------------------------------------
+        --help              Show this help message and exit
+        --version           Show pipeline version and exit
+        --email             Email address for pipeline completion notification
+        --email_on_fail     Email address for pipeline failure notification
+        --plaintext_email   Send plain-text email instead of HTML [default: false]
+        --monochrome_logs   Disable ANSI colour in log output [default: false]
+        --hook_url          Slack/Teams hook URL for notifications
+        --publish_dir_mode  Method for publishing results [default: copy]
+
+    -----------------------------------------------------------------------
+    EXAMPLES
+    -----------------------------------------------------------------------
+        # FASTQ input (skip basecalling)
+        nextflow run main.nf \\
+            --input /path/to/fastqs/ \\
+            --input_type fastq \\
+            --outdir /path/to/results/ \\
+            -profile singularity,slurm
+
+        # POD5 input (full pipeline)
+        nextflow run main.nf \\
+            --input /path/to/pod5s/ \\
+            --input_type pod5 \\
+            --barcode_kit SQK-NBD114-96 \\
+            --outdir /path/to/results/ \\
+            -profile singularity,slurm
+
+        # BAM input (skip basecalling, demux from BAM)
+        nextflow run main.nf \\
+            --input /path/to/bams/ \\
+            --input_type bam \\
+            --outdir /path/to/results/ \\
+            -profile singularity,slurm
+    =========================================
+    """.stripIndent()
+}
+//
 // Generate methods description for MultiQC
 //
 def toolCitationText() {
