@@ -35,7 +35,7 @@ process AUTOCYCLER_MINIASM {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         autocycler: \$(autocycler --version | sed 's/Autocycler v//')
-        miniasm: \$(miniasm -V 2>&1 | head -1 |yes  sed 's/Miniasm v//')
+        miniasm: \$(miniasm -V 2>&1 | head -1 | sed 's/Miniasm v//')
     END_VERSIONS    
     """
 
