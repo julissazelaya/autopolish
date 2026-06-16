@@ -10,7 +10,7 @@ include { AUTOCYCLER_WEIGHT as AUTOCYCLER_WEIGHT_PLASSEMBLER } from '../../../mo
 include { AUTOCYCLER_WEIGHT as AUTOCYCLER_WEIGHT_FLYE        } from '../../../modules/local/autocycler/weight/main'
 include { FLYE                   } from '../../../modules/nf-core/flye/main'
 include { METAMDBG_ASM           } from '../../../modules/nf-core/metamdbg/asm/main'
-include { AUTOCYCLER_METAMDBGFILTER   } from '../../../modules/local/autocycler/metamdbgfilter/main'
+include { AUTOCYCLER_METAMDBGFILTER                          } from '../../../modules/local/autocycler/metamdbgfilter/main'
 include { PLASSEMBLER_LONG       } from '../../../modules/local/plassembler/long/main'
 include { RAVEN                  } from '../../../modules/nf-core/raven/main'
 /*
