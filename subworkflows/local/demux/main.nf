@@ -4,6 +4,7 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 include { DORADO_DEMUX } from '../../../modules/local/dorado/demux/main.nf'
+include { NANOPLOT     } from '../../../modules/nf-core/nanoplot/main'                                                                                                                                                                                                                                                                                                                                 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN SUBWORKFLOW
@@ -26,6 +27,10 @@ workflow DEMUX {
             }
             .set { ch_classified_reads }
 
+        nanoplot = NANOPLOT(ch_classified_reads)
+
+
     emit:
         reads = ch_classified_reads
+        nanoplot = nanoplot.html
 }
