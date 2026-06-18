@@ -1,0 +1,20 @@
+Changes in component 'nf-core/samtools/addreplacerg'
+'modules/nf-core/samtools/addreplacerg/environment.yml' is unchanged
+Changes in 'samtools/addreplacerg/main.nf':
+--- modules/nf-core/samtools/addreplacerg/main.nf
++++ modules/nf-core/samtools/addreplacerg/main.nf
+@@ -26,7 +26,7 @@
+     script:
+     def args = task.ext.args ?: ''
+     def reference = fasta ? "--reference ${fasta}" : ''
+-    def read_group_arg = read_group ? "-r ${read_group}" : ''
++    def read_group_arg = read_group ? "-r \"${read_group}\"" : ''
+     def file_type = args =~ /--output-fmt\s+sam|-O\s+sam/
+         ? "sam"
+         : args =~ /--output-fmt\s+bam|-O\s+bam/
+
+'modules/nf-core/samtools/addreplacerg/meta.yml' is unchanged
+'modules/nf-core/samtools/addreplacerg/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/samtools/addreplacerg/tests/main.nf.test' is unchanged
+'modules/nf-core/samtools/addreplacerg/tests/nextflow.config' is unchanged
+************************************************************
