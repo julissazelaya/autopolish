@@ -78,7 +78,7 @@ workflow AUTOPOLISH {
 
     aligned = ALIGNMENT(
         autocycler.consensus_assembly,
-        ch_reads
+        draft.normalized_reads
     )
 
     polished = POLISHING(
