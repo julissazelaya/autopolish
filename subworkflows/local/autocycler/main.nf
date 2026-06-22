@@ -5,6 +5,7 @@
 */
 include { AUTOCYCLER_CLUSTER     } from '../../../modules/nf-core/autocycler/cluster/main'
 include { AUTOCYCLER_COMBINE     } from '../../../modules/nf-core/autocycler/combine/main'
+include { AUTOCYCLER_CLEAN       } from '../../../modules/local/autocycler/clean/main'
 include { AUTOCYCLER_COMPRESS    } from '../../../modules/nf-core/autocycler/compress/main'
 include { AUTOCYCLER_RESOLVE     } from '../../../modules/nf-core/autocycler/resolve/main'
 include { AUTOCYCLER_SUBSAMPLE   } from '../../../modules/nf-core/autocycler/subsample/main'
@@ -42,7 +43,8 @@ workflow AUTOCYCLER {
             .set { ch_resolved }
 
         autocycler_combined  = AUTOCYCLER_COMBINE(ch_resolved)
-        reoriented_assembly  = DNAAPLER(autocycler_combined.gfa)
+        autocycler_cleaned   = AUTOCYCLER_CLEAN(autocycler_combined.gfa)
+        reoriented_assembly  = DNAAPLER(autocycler_cleaned.gfa)
         fasta_assembly       = AUTOCYCLER_GFA2FASTA(reoriented_assembly.gfa)
 
     emit:
