@@ -51,7 +51,7 @@ workflow AUTOPOLISH {
             }
             .filter { meta, fastq -> !fastq.name.contains('unclassified') }
             .set { ch_reads }
-
+        
     } else if (params.input_type == 'bam') {
         channel.fromPath("${params.input}/*.bam", checkIfExists: true)
             .map { bam -> [ [id: 'merged'], bam ] }
