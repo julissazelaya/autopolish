@@ -23,6 +23,8 @@ process PLASSEMBLER_LONG {
     def args   = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
+    export PATH=/usr/local/bin:\$PATH
+
     plassembler long \\
         -l ${long_reads} \\
         -o plassembler_out \\
