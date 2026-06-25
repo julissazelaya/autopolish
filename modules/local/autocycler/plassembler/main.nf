@@ -1,4 +1,4 @@
-process PLASSEMBLER_LONG {
+process AUTOCYCLER_PLASSEMBLER {
     tag "$meta.id"
     label 'process_high'
 
