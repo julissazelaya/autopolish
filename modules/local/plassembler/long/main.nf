@@ -4,8 +4,8 @@ process PLASSEMBLER_LONG {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'docker://quay.io/biocontainers/plassembler:1.8.2--pyhdfd78af_0' :
-        'quay.io/biocontainers/plassembler:1.8.2--pyhdfd78af_0' }"
+        'docker://community.wave.seqera.io/library/autocycler_canu_flye_necat_pruned:03bb63b44c09a95e' :
+        'community.wave.seqera.io/library/autocycler_canu_flye_necat_pruned:03bb63b44c09a95e' }"
 
     input:
     tuple val(meta), path(long_reads), val(genome_size)
@@ -23,7 +23,6 @@ process PLASSEMBLER_LONG {
     def args   = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    export PATH=/usr/local/bin:\$PATH
 
     plassembler long \\
         -l ${long_reads} \\
@@ -43,7 +42,6 @@ process PLASSEMBLER_LONG {
         plassembler: \$(plassembler --version)
     END_VERSIONS
     """
-
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
