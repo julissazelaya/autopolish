@@ -26,7 +26,6 @@ process AUTOCYCLER_NECAT {
         --out_prefix ${prefix} \\
         --genome_size ${genome_size} \\
         --threads ${task.cpus} \\
-        --read_type ${params.read_type} \\
         ${args}
 
     cat <<-END_VERSIONS > versions.yml
