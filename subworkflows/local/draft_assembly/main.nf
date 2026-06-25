@@ -11,6 +11,7 @@ include { AUTOCYCLER_WEIGHT as AUTOCYCLER_WEIGHT_FLYE        } from '../../../mo
 include { FLYE                   } from '../../../modules/nf-core/flye/main'
 include { METAMDBG_ASM           } from '../../../modules/nf-core/metamdbg/asm/main'
 include { AUTOCYCLER_METAMDBGFILTER                          } from '../../../modules/local/autocycler/metamdbgfilter/main'
+include { AUTOCYCLER_NECAT       } from '../../../modules/local/autocycler/necat/main'
 include { AUTOCYCLER_PLASSEMBLER                             } from '../../../modules/local/autocycler/plassembler/main'
 include { RAVEN                  } from '../../../modules/nf-core/raven/main'
 /*
@@ -93,6 +94,7 @@ workflow DRAFT_ASSEMBLY {
         metamdbg_filtered  = AUTOCYCLER_METAMDBGFILTER(metamdbg_assembly.contigs)
         raven_assembly    = RAVEN(ch_assembler_reads)
         miniasm_assembly  = AUTOCYCLER_MINIASM(ch_assembler_reads, ch_assembler_genomesize)
+        necat_assembly    = AUTOCYCLER_NECAT(ch_assembler_reads, ch_assembler_genomesize)
 
         ch_reads_for_plassembler = reads_with_size.map { meta, reads, size -> [ meta, reads, size ] }
         plassembler_assembly     = AUTOCYCLER_PLASSEMBLER(ch_reads_for_plassembler)
@@ -118,6 +120,7 @@ workflow DRAFT_ASSEMBLY {
         ch_all_assemblies = flye_weighted.fasta
             .mix(metamdbg_filtered.fasta)
             .mix(miniasm_assembly.fasta)
+            .mix(necat_assembly.fasta)
             .mix(plassembler_weighted.fasta)
             .mix(raven_assembly.fasta)
             .map { meta, fasta -> [ meta.barcode, fasta ] }
