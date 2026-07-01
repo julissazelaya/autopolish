@@ -1,10 +1,11 @@
-process AUTOCYCLER_NECAT {
+process AUTOCYCLER_NEXTDENOVO {
     tag "$meta.id"
     label 'process_high'
+    errorStrategy 'ignore'
 
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'docker://community.wave.seqera.io/library/autocycler_canu_flye_necat_pruned:03bb63b44c09a95e' :
-        'community.wave.seqera.io/library/autocycler_canu_flye_necat_pruned:03bb63b44c09a95e' }"
+        'docker://community.wave.seqera.io/library/autocycler_nextdenovo_nextpolish:5954f10c2e75e345' :
+        'community.wave.seqera.io/library/autocycler_nextdenovo_nextpolish:5954f10c2e75e345' }"
 
     input:
     tuple val(meta), path(reads)
@@ -19,9 +20,9 @@ process AUTOCYCLER_NECAT {
 
     script:
     def args   = task.ext.args ?: ''
-    prefix     = task.ext.prefix ?: "${meta.id}_necat"
+    prefix     = task.ext.prefix ?: "${meta.id}_nextdenovo"
     """
-    autocycler helper necat \\
+    autocycler helper nextdenovo \\
         --reads ${reads} \\
         --out_prefix ${prefix} \\
         --genome_size ${genome_size} \\
@@ -35,7 +36,7 @@ process AUTOCYCLER_NECAT {
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}_necat"
+    prefix = task.ext.prefix ?: "${meta.id}_nextdenovo"
     """
     touch ${prefix}.fasta
     touch versions.yml

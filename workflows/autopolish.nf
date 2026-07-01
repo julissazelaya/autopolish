@@ -47,6 +47,7 @@ workflow AUTOPOLISH {
                     .replaceAll('.bam.fastq', '')
                     .replaceAll('.fastq.gz', '')
                     .replaceAll('.fastq', '')
+                    .replaceAll('\\.bam$', '')
                 [ [id: barcode_id], fastq ]
             }
             .filter { meta, fastq -> !fastq.name.contains('unclassified') }

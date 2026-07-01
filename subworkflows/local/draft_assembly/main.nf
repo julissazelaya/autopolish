@@ -6,6 +6,7 @@
 include { AUTOCYCLER_GENOMESIZE  } from '../../../modules/local/autocycler/genomesize/main'
 include { AUTOCYCLER_SUBSAMPLE   } from '../../../modules/nf-core/autocycler/subsample/main'
 include { AUTOCYCLER_MINIASM     } from '../../../modules/local/autocycler/miniasm/main'
+include { AUTOCYCLER_NEXTDENOVO  } from '../../../modules/local/autocycler/nextdenovo/main'
 include { AUTOCYCLER_WEIGHT as AUTOCYCLER_WEIGHT_PLASSEMBLER } from '../../../modules/local/autocycler/weight/main'
 include { AUTOCYCLER_WEIGHT as AUTOCYCLER_WEIGHT_FLYE        } from '../../../modules/local/autocycler/weight/main'
 include { FLYE                   } from '../../../modules/nf-core/flye/main'
@@ -89,12 +90,14 @@ workflow DRAFT_ASSEMBLY {
         Assemblers (parallel)
         -------------------------------
         */
-        flye_assembly     = FLYE(ch_assembler_reads, params.flye_mode)
+        flye_assembly      = FLYE(ch_assembler_reads, params.flye_mode)
         metamdbg_assembly  = METAMDBG_ASM(ch_assembler_reads, params.metamdbg_input_type)
         metamdbg_filtered  = AUTOCYCLER_METAMDBGFILTER(metamdbg_assembly.contigs)
-        raven_assembly    = RAVEN(ch_assembler_reads)
-        miniasm_assembly  = AUTOCYCLER_MINIASM(ch_assembler_reads, ch_assembler_genomesize)
-        necat_assembly    = AUTOCYCLER_NECAT(ch_assembler_reads, ch_assembler_genomesize)
+        raven_assembly     = RAVEN(ch_assembler_reads)
+        miniasm_assembly   = AUTOCYCLER_MINIASM(ch_assembler_reads, ch_assembler_genomesize)
+        necat_assembly     = AUTOCYCLER_NECAT(ch_assembler_reads, ch_assembler_genomesize)
+        nextdenovo_assembly= AUTOCYCLER_NEXTDENOVO(ch_assembler_reads, ch_assembler_genomesize)
+    
 
         ch_reads_for_plassembler = reads_with_size.map { meta, reads, size -> [ meta, reads, size ] }
         plassembler_assembly     = AUTOCYCLER_PLASSEMBLER(ch_reads_for_plassembler)
@@ -121,6 +124,7 @@ workflow DRAFT_ASSEMBLY {
             .mix(metamdbg_filtered.fasta)
             .mix(miniasm_assembly.fasta)
             .mix(necat_assembly.fasta)
+            .mix(nextdenovo_assembly.fasta)
             .mix(plassembler_weighted.fasta)
             .mix(raven_assembly.fasta)
             .map { meta, fasta -> [ meta.barcode, fasta ] }
