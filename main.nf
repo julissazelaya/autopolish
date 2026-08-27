@@ -159,6 +159,30 @@ workflow {
     }
 
     //
+    // Validate required params up front, before anything tries to use them
+    //
+    def missing_params = []
+    if (!params.input)       missing_params << '--input'
+    if (!params.input_type)  missing_params << '--input_type'
+    if (missing_params) {
+        error "Missing required parameter(s): ${missing_params.join(', ')}\n" +
+              "Run with --help to see usage."
+    }
+
+    def valid_input_types = ['fastq', 'bam', 'pod5']
+    if (!(params.input_type in valid_input_types)) {
+        error "Invalid --input_type '${params.input_type}'. Must be one of: ${valid_input_types.join(', ')}"
+    }
+
+    if (params.input_type == 'pod5' && !params.barcode_kit) {
+        error "--barcode_kit is required when --input_type is 'pod5'."
+    }
+
+    if (!file(params.input).exists()) {
+        error "Input path does not exist: ${params.input}"
+    }
+
+    //
     // Resolve outdir from run_name if not explicitly set
     //
     if (!params.outdir) {
