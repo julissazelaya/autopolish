@@ -10,7 +10,7 @@
             "type": "object",
             "fa_icon": "fas fa-terminal",
             "description": "Define where the pipeline should find input data and save output data.",
-            "required": ["input", "input_type", "outdir"],
+            "required": ["input", "input_type"],
             "properties": {
                 "input": {
                     "type": "string",
@@ -30,8 +30,18 @@
                 "outdir": {
                     "type": "string",
                     "format": "directory-path",
-                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "description": "The output directory where the results will be saved. Derived from --run_name and --analysis_base if not set directly.",
                     "fa_icon": "fas fa-folder-open"
+                },
+                "run_name": {
+                    "type": "string",
+                    "description": "Short name for this run. Combined with --analysis_base to build --outdir when --outdir is not set directly, e.g. --run_name fragmented_rerun."
+                },
+                "analysis_base": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "default": "/mrsnStorage/projects/Autopolish/analysis",
+                    "description": "Base directory under which run-specific output folders are created when using --run_name."
                 }
             }
         },
