@@ -23,23 +23,6 @@ workflow AUTOPOLISH {
     main:
     ch_versions = channel.empty()
 
-    /*
-    ----------------------------------------
-    Input handling
-    ----------------------------------------
-    */
-    if (params.help) {
-    log.info helpText()
-    exit 0
-    }
-    
-    if (!params.input)      error "Please provide --input"
-    if (!params.input_type) error "Please provide --input_type: fastq, pod5, or bam"
-    if (!['fastq', 'pod5', 'bam'].contains(params.input_type))
-        error "Invalid --input_type '${params.input_type}': must be fastq, pod5, or bam"
-    if (params.input_type == 'pod5' && !params.barcode_kit)
-        error "Please provide --barcode_kit when using --input_type pod5"
-
     if (params.input_type == 'fastq') {
         channel.fromPath("${params.input}/*.fastq*", checkIfExists: true)
             .map { fastq ->
@@ -69,6 +52,7 @@ workflow AUTOPOLISH {
         demuxed    = DEMUX(basecalled.bam)
         ch_reads   = demuxed.reads
     }
+    
     /*
     ----------------------------------------
     Workflow
