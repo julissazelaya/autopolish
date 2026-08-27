@@ -39,7 +39,10 @@ def helpText() {
     -----------------------------------------------------------------------
         --input             Path to directory containing input files
         --input_type        Input file type: 'fastq', 'bam', or 'pod5'
-        --outdir            Path to output directory [default: ./]
+        --run_name           Short name for this run; output goes to
+                            <analysis_base>/<run_name>
+                            [default base: /mrsnStorage/projects/Autopolish/analysis]
+        --outdir            Full output path, overrides --run_name if set
 
     -----------------------------------------------------------------------
     BASECALLING & DEMULTIPLEXING  (pod5 input only)
@@ -95,7 +98,7 @@ def helpText() {
         nextflow run main.nf \\
             --input /path/to/fastqs/ \\
             --input_type fastq \\
-            --outdir /path/to/results/ \\
+            --run_name my_run \\
             -profile singularity,slurm
 
         # POD5 input (full pipeline)
@@ -103,14 +106,21 @@ def helpText() {
             --input /path/to/pod5s/ \\
             --input_type pod5 \\
             --barcode_kit SQK-NBD114-96 \\
-            --outdir /path/to/results/ \\
+            --run_name my_run \\
             -profile singularity,slurm
 
         # BAM input (skip basecalling, demux from BAM)
         nextflow run main.nf \\
             --input /path/to/bams/ \\
             --input_type bam \\
-            --outdir /path/to/results/ \\
+            --run_name my_run \\
+            -profile singularity,slurm
+
+        # Or bypass run_name entirely with a full explicit path
+        nextflow run main.nf \\
+            --input /path/to/fastqs/ \\
+            --input_type fastq \\
+            --outdir /custom/full/path/ \\
             -profile singularity,slurm
     =========================================
     """.stripIndent()
@@ -147,6 +157,17 @@ workflow {
         log.info helpText()
         exit 0
     }
+
+    //
+    // Resolve outdir from run_name if not explicitly set
+    //
+    if (!params.outdir) {
+        if (!params.run_name) {
+            error "Provide --run_name or set --outdir directly."
+        }
+        params.outdir = "${params.analysis_base}/${params.run_name}"
+    }
+
     //
     // Print version and exit if required, dump params to JSON
     //
