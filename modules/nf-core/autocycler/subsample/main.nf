@@ -42,6 +42,6 @@ process AUTOCYCLER_SUBSAMPLE {
     mkdir $prefix
     echo | gzip > ${prefix}/sample_00.fastq.gz
     touch ${prefix}/subsample.yaml  
-    
+
     """
 }

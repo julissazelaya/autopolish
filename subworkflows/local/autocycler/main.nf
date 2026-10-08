@@ -21,6 +21,8 @@ include { DNAAPLER               } from '../../../modules/local/dnaapler/main'
 workflow AUTOCYCLER {
     take:
         assemblies
+        subsample_stats
+        reads
 
     main:
         autocycler_compressed = AUTOCYCLER_COMPRESS(assemblies)
@@ -29,7 +31,7 @@ workflow AUTOCYCLER {
         autocycler_clustered.clusters
             .transpose()
             .map { meta, gfa ->
-                def cluster_name = gfa.name.toString().replaceAll('.gfa', '')
+                def cluster_name = gfa.parent.name
                 def cluster_id   = "${meta.id}_${cluster_name}"
                 [ [id: cluster_id, barcode: meta.id], gfa ]
             }
@@ -43,7 +45,12 @@ workflow AUTOCYCLER {
             .groupTuple()
             .set { ch_resolved }
 
-        autocycler_combined  = AUTOCYCLER_COMBINE(ch_resolved)
+        ch_resolved
+            .join(reads.map { meta, fq -> [ [id: meta.id], fq ] }, remainder: true)
+            .filter { meta, gfas, fq -> gfas != null }
+            .map    { meta, gfas, fq -> [ meta, gfas, fq ?: [] ] }
+            .set { ch_combine_in }
+        autocycler_combined  = AUTOCYCLER_COMBINE(ch_combine_in)
         autocycler_cleaned   = AUTOCYCLER_CLEAN(autocycler_combined.gfa)
         reoriented_assembly  = DNAAPLER(autocycler_cleaned.gfa)
         fasta_assembly       = AUTOCYCLER_GFA2FASTA(reoriented_assembly.gfa)

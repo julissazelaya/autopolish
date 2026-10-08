@@ -4,8 +4,8 @@ process PLASSEMBLER_LONG {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'docker://community.wave.seqera.io/library/autocycler_canu_flye_necat_pruned:03bb63b44c09a95e' :
-        'community.wave.seqera.io/library/autocycler_canu_flye_necat_pruned:03bb63b44c09a95e' }"
+        'community.wave.seqera.io/library/autocycler_canu_flye_necat:8ee3f852553cb5d5' :
+        'community.wave.seqera.io/library/autocycler_canu_flye_necat:8ee3f852553cb5d5' }"
 
     input:
     tuple val(meta), path(long_reads), val(genome_size)

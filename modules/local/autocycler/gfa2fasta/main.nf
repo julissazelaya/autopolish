@@ -4,8 +4,8 @@ process AUTOCYCLER_GFA2FASTA {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'docker://community.wave.seqera.io/library/autocycler_seqkit:4ed8a47183130c75' :
-        'community.wave.seqera.io/library/autocycler_seqkit:4ed8a47183130c75' }"
+        'docker://community.wave.seqera.io/library/autocycler_seqkit:e2a39acd492a1f77' :
+        'community.wave.seqera.io/library/autocycler_seqkit:e2a39acd492a1f77' }"
 
     input:
     tuple val(meta), path(gfa)

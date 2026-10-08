@@ -4,8 +4,8 @@ process AUTOCYCLER_MINIASM {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://community.wave.seqera.io/library/autocycler_miniasm_minipolish:b2824e8b9f9e391c' :
-        'community.wave.seqera.io/library/autocycler_miniasm_minipolish:b2824e8b9f9e391c' }"
+        'docker://community.wave.seqera.io/library/autocycler_miniasm_minipolish:847dab5a56ae524f' :
+        'community.wave.seqera.io/library/autocycler_miniasm_minipolish:847dab5a56ae524f' }"
 
     input:
     tuple val(meta), path(reads)

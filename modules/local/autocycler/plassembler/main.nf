@@ -4,8 +4,8 @@ process AUTOCYCLER_PLASSEMBLER {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'docker://community.wave.seqera.io/library/autocycler_chopper_dnaapler_fastp_pruned:c48f917a2773734a' :
-        'community.wave.seqera.io/library/autocycler_chopper_dnaapler_fastp_pruned:c48f917a2773734a' }"
+        'docker://community.wave.seqera.io/library/autocycler_chopper_dnaapler_fastp:29adc433bf11f21d' :
+        'community.wave.seqera.io/library/autocycler_chopper_dnaapler_fastp:29adc433bf11f21d' }"
 
     input:
     tuple val(meta), path(long_reads), val(genome_size)
