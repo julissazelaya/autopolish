@@ -1,0 +1,8 @@
+Oct-08 12:59:15.954 [main] INFO  com.askimed.nf.test.App - nf-test 0.9.5
+Oct-08 12:59:15.963 [main] INFO  com.askimed.nf.test.App - Arguments: [test, modules/nf-core/autocycler, --profile, singularity, --update-snapshot]
+Oct-08 12:59:16.448 [main] INFO  com.askimed.nf.test.App - Nextflow Version: 25.10.4
+Oct-08 12:59:16.450 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Load config from file /mrsnStorage/dev/git/mrsn/nf-core-autopolish/nf-test.config...
+Oct-08 12:59:18.136 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Loaded 63 files from directory /mrsnStorage/dev/git/mrsn/nf-core-autopolish in 0.887 sec
+Oct-08 12:59:18.137 [main] INFO  com.askimed.nf.test.lang.dependencies.DependencyResolver - Found 0 files containing tests.
+Oct-08 12:59:18.137 [main] DEBUG com.askimed.nf.test.lang.dependencies.DependencyResolver - Found files: []
+Oct-08 12:59:18.138 [main] INFO  com.askimed.nf.test.commands.RunTestsCommand - Found 0 tests to execute.

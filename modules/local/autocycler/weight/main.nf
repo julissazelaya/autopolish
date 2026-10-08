@@ -20,7 +20,7 @@ process AUTOCYCLER_WEIGHT {
     script:
     if (weight_type == 'cluster') {
         """
-        sed -i 's/circular=True/circular=True Autocycler_cluster_weight=2/' ${fasta}
+        sed -i 's/circular=True/circular=True Autocycler_cluster_weight=3/' ${fasta}
         """
     } else if (weight_type == 'consensus') {
         """
