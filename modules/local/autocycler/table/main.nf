@@ -4,8 +4,8 @@ process AUTOCYCLER_TABLE {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/autocycler:0.5.2--h3ab6199_0':
-        'quay.io/biocontainers/autocycler:0.5.2--h3ab6199_0' }"
+        'https://depot.galaxyproject.org/singularity/autocycler:0.8.0--h79ce301_0':
+        'quay.io/biocontainers/autocycler:0.8.0--h79ce301_0' }"
 
     input:
     tuple val(meta), path(yamls, stageAs: 'autocycler_dir/yaml_???/*')

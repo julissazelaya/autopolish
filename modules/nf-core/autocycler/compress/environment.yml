@@ -4,4 +4,4 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - "bioconda::autocycler=0.5.2"
+  - "bioconda::autocycler=0.8.0"

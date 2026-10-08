@@ -1,14 +1,14 @@
 process AUTOCYCLER_COMBINE {
     tag "$meta.id"
-    label 'process_single'
+    label 'process_low'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/autocycler:0.5.2--h3ab6199_0':
-        'quay.io/biocontainers/autocycler:0.5.2--h3ab6199_0' }"
+        'https://depot.galaxyproject.org/singularity/autocycler:0.8.0--h79ce301_0':
+        'quay.io/biocontainers/autocycler:0.8.0--h79ce301_0' }"
 
     input:
-    tuple val(meta), path(clusters, stageAs: "cluster_?/*")
+    tuple val(meta), path(clusters, stageAs: "cluster_?/*", path(reads))
 
     output:
     tuple val(meta), path("combine/${prefix}/consensus_assembly.fasta"), emit: fasta
@@ -22,9 +22,11 @@ process AUTOCYCLER_COMBINE {
     script:
     def args = task.ext.args   ?: ''
     prefix   = task.ext.prefix ?: "${meta.id}"
+    def read_args = reads ? "--reads ${reads} --threads ${Math.min(task.cpus as int, 100)}" : ''
     """
     autocycler combine \\
         $args \\
+        $read_args \\
         -i $clusters \\
         -a combine
 
