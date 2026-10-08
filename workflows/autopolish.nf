@@ -58,7 +58,7 @@ workflow AUTOPOLISH {
     ----------------------------------------
     */
     draft      = DRAFT_ASSEMBLY(ch_reads)
-    autocycler = AUTOCYCLER(draft.assemblies)
+    autocycler = AUTOCYCLER(draft.assemblies, draft.subsample_stats)
 
     aligned = ALIGNMENT(
         autocycler.consensus_assembly,

@@ -1,7 +1,6 @@
-
-process AUTOCYCLER_SUBSAMPLE {
+process AUTOCYCLER_TABLE {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_single'
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
@@ -9,12 +8,10 @@ process AUTOCYCLER_SUBSAMPLE {
         'quay.io/biocontainers/autocycler:0.5.2--h3ab6199_0' }"
 
     input:
-    tuple val(meta), path(reads)
-    val genome_size
+    tuple val(meta), path(yamls, stageAs: 'autocycler_dir/yaml_???/*')
 
     output:
-    tuple val(meta), path("$prefix/*.fastq.gz"), emit: subsampled_reads
-    tuple val(meta), path("$prefix/subsample.yaml"), emit: stats 
+    tuple val(meta), path("${prefix}.tsv"), emit: tsv
     tuple val("${task.process}"), val("autocycler"), eval("autocycler --version |  sed 's/^[^ ]* //'"), emit: versions_autocycler, topic: versions
 
     when:
@@ -23,25 +20,20 @@ process AUTOCYCLER_SUBSAMPLE {
     script:
     def args = task.ext.args   ?: ''
     prefix   = task.ext.prefix ?: "${meta.id}"
-    // fix random seed for reproducibility if not specified in command line
-    if (!(args ==~ /.*--seed.*/)) {args += " --seed 42"}
     """
-    autocycler subsample \\
-        $args \\
-        --reads $reads \\
-        --out_dir ${prefix} \\
-        --genome_size $genome_size
 
-    gzip $prefix/*.fastq
+    autocycler table $args > ${prefix}.tsv
+
+    autocycler table \\
+        $args \\
+        --autocycler_dir autocycler_dir \\
+        --name ${meta.id} \\
+        >> ${prefix}.tsv
     """
 
     stub:
     prefix   = task.ext.prefix ?: "${meta.id}"
     """
-
-    mkdir $prefix
-    echo | gzip > ${prefix}/sample_00.fastq.gz
-    touch ${prefix}/subsample.yaml  
-    
+    touch ${prefix}.tsv
     """
 }

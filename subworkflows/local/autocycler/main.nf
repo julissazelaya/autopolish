@@ -11,6 +11,7 @@ include { AUTOCYCLER_RESOLVE     } from '../../../modules/nf-core/autocycler/res
 include { AUTOCYCLER_SUBSAMPLE   } from '../../../modules/nf-core/autocycler/subsample/main'
 include { AUTOCYCLER_TRIM        } from '../../../modules/nf-core/autocycler/trim/main'
 include { AUTOCYCLER_GFA2FASTA   } from '../../../modules/local/autocycler/gfa2fasta/main'
+include { AUTOCYCLER_TABLE       } from '../../../modules/local/autocycler/table/main'
 include { DNAAPLER               } from '../../../modules/local/dnaapler/main'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

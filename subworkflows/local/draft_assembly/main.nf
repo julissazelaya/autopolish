@@ -129,6 +129,7 @@ workflow DRAFT_ASSEMBLY {
     emit:
         subsampled_reads = subsampled.subsampled_reads
         assemblies       = assemblies.assemblies
+        subsample_stats  = subsampled.stats 
         normalized_reads = ch_reads_flat
 }
 
