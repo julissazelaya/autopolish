@@ -12,6 +12,7 @@ include { FLYE                   } from '../../../modules/nf-core/flye/main'
 include { METAMDBG_ASM           } from '../../../modules/nf-core/metamdbg/asm/main'
 include { AUTOCYCLER_METAMDBGFILTER                          } from '../../../modules/local/autocycler/metamdbgfilter/main'
 include { AUTOCYCLER_PLASSEMBLER                             } from '../../../modules/local/autocycler/plassembler/main'
+include { AUTOCYCLER_CANU        } from '../../../modules/local/autocycler/canu/main'
 include { RAVEN                  } from '../../../modules/nf-core/raven/main'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -24,6 +25,9 @@ workflow DRAFT_ASSEMBLY {
         reads
 
     main:
+        def assemblers = assemblersForSet(params.assembler_set)
+        log.info "Assemblers (--assembler_set ${params.assembler_set}): ${assemblers.join(', ')}"
+        
         /*
         -------------------------------
         Flatten reads per barcode
@@ -92,7 +96,11 @@ workflow DRAFT_ASSEMBLY {
         metamdbg_assembly  = METAMDBG_ASM(ch_assembler_reads, params.metamdbg_input_type)
         metamdbg_filtered  = AUTOCYCLER_METAMDBGFILTER(metamdbg_assembly.contigs)
         raven_assembly     = RAVEN(ch_assembler_reads)
-        miniasm_assembly   = AUTOCYCLER_MINIASM(ch_assembler_reads, ch_assembler_genomesize)    
+        miniasm_assembly   = AUTOCYCLER_MINIASM(ch_assembler_reads, ch_assembler_genomesize)
+
+        canu_assembly      = AUTOCYCLER_CANU(
+        ch_assembler_reads.filter      { 'canu' in assemblers },
+        ch_assembler_genomesize.filter { 'canu' in assemblers })    
 
         ch_reads_for_plassembler = reads_with_size.map { meta, reads, size -> [ meta, reads, size ] }
         plassembler_assembly     = AUTOCYCLER_PLASSEMBLER(ch_reads_for_plassembler)
@@ -120,6 +128,7 @@ workflow DRAFT_ASSEMBLY {
             .mix(miniasm_assembly.fasta)
             .mix(plassembler_weighted.fasta)
             .mix(raven_assembly.fasta)
+            .mix(canu_assembly.fasta)
             .map { meta, fasta -> [ meta.barcode, fasta ] }
             .groupTuple(remainder: true)
             .map { barcode, fastas -> [ [id: barcode], fastas ] }
@@ -132,6 +141,33 @@ workflow DRAFT_ASSEMBLY {
         subsample_stats  = subsampled.stats 
         normalized_reads = ch_reads_flat
 }
+
+/*
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    ASSEMBLER SETS      
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+*/
+def assemblerSets() {
+    def standard = [ 'flye', 'metamdbg', 'miniasm', 'plassembler', 'raven' ]
+    def extended = standard + [ 'canu' ]
+    return [ standard: standard, extended: extended ]
+}
+ 
+//
+// Resolve a preset name to its list of assemblers. nextflow_schema.json already rejects
+// other values; this check covers runs where validation is switched off.
+//
+def assemblersForSet(assembler_set) {
+    def sets = assemblerSets()
+    def name = assembler_set?.toString()?.toLowerCase()
+    if (!sets.containsKey(name)) {
+        error("Unknown --assembler_set '${assembler_set}'. Choose one of: ${sets.keySet().join(', ')}")
+    }
+    return sets[name]
+}
+ 
+/*
+
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -77,6 +77,12 @@
             "description": "",
             "default": "",
             "properties": {
+                "assembler_set": {
+                    "type": "string",
+                    "default": "standard",
+                    "enum": ["standard", "extended"],
+                    "description": "Assembler preset: standard (Flye, metaMDBG, miniasm, Plassembler, Raven) or extended (standard plus Canu)"
+                },
                 "min_read_depth": {
                     "type": "integer",
                     "default": 50,
@@ -101,11 +107,6 @@
                     "type": "string",
                     "default": "/mrsnStorage/resources/plassembler",
                     "description": "Path to Plassembler database"
-                },
-                "canu_mode": {
-                    "type": "string",
-                    "default": "-nanopore",
-                    "description": "Canu assembly mode flag"
                 }
             }
         },

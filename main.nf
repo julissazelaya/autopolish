@@ -62,7 +62,9 @@ def helpText() {
         --min_read_depth    Minimum read depth for assembly [default: 50]
         --read_type         Read type passed to assemblers [default: ont_r10]
         --flye_mode         Flye assembly mode [default: --nano-hq]
-        --canu_mode         Canu assembly mode [default: -nanopore]
+        --assembler_set     Assembler preset [default: standard]
+                            standard: Flye, metaMDBG, miniasm, Plassembler, Raven
+                            extended: standard + Canu
         --metamdbg_input_type
                             metaMDBG input type [default: ont]
         --plassembler_db    Path to Plassembler database
@@ -109,19 +111,13 @@ def helpText() {
             --run_name my_run \\
             -profile singularity,slurm
 
-        # BAM input (skip basecalling, demux from BAM)
-        nextflow run main.nf \\
-            --input /path/to/bams/ \\
-            --input_type bam \\
-            --run_name my_run \\
-            -profile singularity,slurm
-
-        # Or bypass run_name entirely with a full explicit path
-        nextflow run main.nf \\
-            --input /path/to/fastqs/ \\
-            --input_type fastq \\
-            --outdir /custom/full/path/ \\
-            -profile singularity,slurm
++       # Add Canu to the assemblers
++       nextflow run main.nf \\
++           --input /path/to/fastqs/ \\
++           --input_type fastq \\
++           --assembler_set extended \\
++           --run_name my_run \\
++           -profile singularity,slurm
     =========================================
     """.stripIndent()
 }
@@ -191,6 +187,11 @@ workflow {
         }
         params.outdir = "${params.analysis_base}/${params.run_name}"
     }
+
+    def valid_assembler_sets = ['standard', 'extended']
+        if (!(params.assembler_set?.toString()?.toLowerCase() in valid_assembler_sets)) {
+            error "Invalid --assembler_set '${params.assembler_set}'. Must be one of: ${valid_assembler_sets.join(', ')}"
+   }
 
     //
     // Print version and exit if required, dump params to JSON
