@@ -1,0 +1,123 @@
+// TODO nf-core: Once you have added the required tests, please run the following command to build this file:
+// nf-core modules test autocycler/table
+nextflow_process {
+
+    name "Test Process AUTOCYCLER_TABLE"
+    script "../main.nf"
+    process "AUTOCYCLER_TABLE"
+
+    tag "modules"
+    tag "modules_"
+    tag "autocycler"
+    tag "autocycler/table"
+
+    test("sarscov2 - assemblies - yamls") {
+ 
+        setup {
+            run("AUTOCYCLER_COMPRESS") {
+                script "../../../../nf-core/autocycler/compress/main.nf"
+                process {
+                    """
+                    input[0] = [
+                        [ id:'test' ],
+                        [
+                            file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fasta/contigs.fasta', checkIfExists: true),
+                            file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fasta/scaffolds.fasta', checkIfExists: true),
+                        ]
+                    ]
+                    """
+                }
+            }
+            run("AUTOCYCLER_CLUSTER") {
+                script "../../../../nf-core/autocycler/cluster/main.nf"
+                process {
+                    """
+                    input[0] = AUTOCYCLER_COMPRESS.out.gfa
+                    """
+                }
+            }
+            run("AUTOCYCLER_TRIM") {
+                script "../../../../nf-core/autocycler/trim/main.nf"
+                process {
+                    """
+                    input[0] = AUTOCYCLER_CLUSTER.out.clusters
+                        .transpose()
+                        .map { meta, gfa -> [ [ id: "\${meta.id}_\${gfa.parent.name}", barcode: meta.id ], gfa ] }
+                    """
+                }
+            }
+            run("AUTOCYCLER_RESOLVE") {
+                script "../../../../nf-core/autocycler/resolve/main.nf"
+                process {
+                    """
+                    input[0] = AUTOCYCLER_TRIM.out.gfa
+                    """
+                }
+            }
+            run("AUTOCYCLER_COMBINE") {
+                script "../../../../nf-core/autocycler/combine/main.nf"
+                process {
+                    """
+                    input[0] = AUTOCYCLER_RESOLVE.out.resolved
+                        .map { meta, gfa -> [ [ id: meta.barcode ], gfa ] }
+                        .groupTuple()
+                    """
+                }
+            }
+        }
+ 
+        when {
+            process {
+                """
+                // Same gathering as subworkflows/local/autocycler: sort key keeps clusters in order
+                input[0] = AUTOCYCLER_COMPRESS.out.stats
+                    .mix( AUTOCYCLER_CLUSTER.out.stats, AUTOCYCLER_COMBINE.out.stats )
+                    .map { meta, yaml -> [ meta.id, '', yaml ] }
+                    .mix(
+                        AUTOCYCLER_CLUSTER.out.clusterstats
+                            .transpose()
+                            .map { meta, yaml -> [ meta.id, "\${meta.id}_\${yaml.parent.name}".toString(), yaml ] },
+                        AUTOCYCLER_TRIM.out.stats
+                            .map { meta, yaml -> [ meta.barcode, meta.id.toString(), yaml ] }
+                    )
+                    .groupTuple()
+                    .map { id, keys, yamls ->
+                        [ [ id: id ], [ keys, yamls ].transpose().sort { it[0] }.collect { it[1] }.flatten() ]
+                    }
+                """
+            }
+        }
+ 
+        then {
+            assertAll(
+                { assert process.success },
+                { assert path(process.out.tsv[0][1]).readLines().size() == 2 },
+                { assert path(process.out.tsv[0][1]).readLines()[1].startsWith('test\t') },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+ 
+    test("sarscov2 - assemblies - yamls - stub") {
+ 
+        options "-stub"
+ 
+        when {
+            process {
+                """
+                input[0] = [
+                    [ id:'test' ],
+                    [ file(params.modules_testdata_base_path + 'genomics/sarscov2/illumina/fasta/contigs.fasta', checkIfExists: true) ]
+                ]
+                """
+            }
+        }
+ 
+        then {
+            assertAll(
+                { assert process.success },
+                { assert snapshot(process.out).match() }
+            )
+        }
+    }
+}
