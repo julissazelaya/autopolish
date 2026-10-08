@@ -1,51 +1,20 @@
-Changes in component 'nf-core/autocycler/subsample'
-Changes in 'autocycler/subsample/main.nf':
---- modules/nf-core/autocycler/subsample/main.nf
-+++ modules/nf-core/autocycler/subsample/main.nf
-@@ -5,8 +5,8 @@
- 
-     conda "${moduleDir}/environment.yml"
-     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
--        'https://depot.galaxyproject.org/singularity/autocycler:0.5.2--h3ab6199_0':
--        'quay.io/biocontainers/autocycler:0.5.2--h3ab6199_0' }"
-+        'https://depot.galaxyproject.org/singularity/autocycler:0.8.0--h79ce301_0':
-+        'quay.io/biocontainers/autocycler:0.8.0--h79ce301_0' }"
- 
-     input:
-     tuple val(meta), path(reads)
-@@ -14,6 +14,7 @@
- 
-     output:
-     tuple val(meta), path("$prefix/*.fastq.gz"), emit: subsampled_reads
-+    tuple val(meta), path("$prefix/subsample.yaml"), emit: stats 
-     tuple val("${task.process}"), val("autocycler"), eval("autocycler --version |  sed 's/^[^ ]* //'"), emit: versions_autocycler, topic: versions
- 
-     when:
-@@ -40,5 +41,7 @@
- 
-     mkdir $prefix
-     echo | gzip > ${prefix}/sample_00.fastq.gz
-+    touch ${prefix}/subsample.yaml  
-+    
-     """
- }
-
-Changes in 'autocycler/subsample/meta.yml':
---- modules/nf-core/autocycler/subsample/meta.yml
-+++ modules/nf-core/autocycler/subsample/meta.yml
-@@ -1,76 +1,75 @@
+Changes in component 'nf-core/autocycler/compress'
+Changes in 'autocycler/compress/meta.yml':
+--- modules/nf-core/autocycler/compress/meta.yml
++++ modules/nf-core/autocycler/compress/meta.yml
+@@ -1,87 +1,83 @@
 ----
 -# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
- name: "autocycler_subsample"
--description: Downsample long-read sequencing data to the requested coverage using Autocycler.
-+description: Downsample long-read sequencing data to the requested coverage 
-+  using Autocycler.
+ name: "autocycler_compress"
+ description: Package candidate assemblies for clustering by Autocycler.
  keywords:
 -  - autocycler
--  - subsampling
+-  - genome-assembly
+-  - compression
 -  - long-read
 +- autocycler
-+- subsampling
++- genome-assembly
++- compression
 +- long-read
  tools:
 -  - autocycler:
@@ -72,54 +41,71 @@ Changes in 'autocycler/subsample/meta.yml':
 +      description: |
 +        Groovy Map containing sample information
 +        e.g. `[ id:'sample1' ]`
-+  - reads:
++  - assemblies:
 +      type: file
 +      description: |
-+        Long-read sequencing reads for the sample in FASTQ format (compressed or uncompressed).
-+      pattern: "*.{fastq,fastq.gz,fq,fq.gz}"
++        Candidate assembly files (typically FASTA) generated for the sample.
++      pattern: "*.{fasta,fa,fasta.gz,fa.gz}"
 +      ontologies:
-+      - edam: "http://edamontology.org/format_1930"
-+- genome_size:
-+    type: integer
-+    description: Expected genome size in bases used to calculate the target 
-+      sequencing depth.
++      - edam: "http://edamontology.org/format_1929"
++      - edam: "http://edamontology.org/format_3989"
 +output:
-+  subsampled_reads:
++  gfa:
    - - meta:
          type: map
          description: |
            Groovy Map containing sample information
            e.g. `[ id:'sample1' ]`
--    - reads:
-+    - "$prefix/*.fastq.gz":
+-    - assemblies:
++    - "compress/${prefix}/*.gfa":
          type: file
--        description: |
--          Long-read sequencing reads for the sample in FASTQ format (compressed or uncompressed).
--        pattern: "*.{fastq,fastq.gz,fq,fq.gz}"
-+        description: Subsampled reads produced by Autocycler.
-+        pattern: "*/*.fastq.gz"
++        description: Assembly graph files ready for clustering.
++        pattern: "compress/*/*.gfa"
++        ontologies:
++        - edam: "http://edamontology.org/format_3975"
++  stats:
++  - - meta:
++        type: map
+         description: |
+-          Candidate assembly files (typically FASTA) generated for the sample.
+-        pattern: "*.{fasta,fa,fasta.gz,fa.gz}"
++          Groovy Map containing sample information
++          e.g. `[ id:'sample1' ]`
++    - "compress/${prefix}/*.yaml":
++        type: file
++        description: Summary statistics generated during compression.
++        pattern: "compress/*/*.yaml"
          ontologies:
--          - edam: "http://edamontology.org/format_1930" # FASTQ
--  - genome_size:
--      type: integer
--      description: Expected genome size in bases used to calculate the target sequencing depth.
+-          - edam: "http://edamontology.org/format_1929" # FASTA
+-          - edam: "http://edamontology.org/format_3989" # GZIP
 -
 -output:
--  subsampled_reads:
+-  gfa:
 -    - - meta:
 -          type: map
 -          description: |
 -            Groovy Map containing sample information
 -            e.g. `[ id:'sample1' ]`
--      - "$prefix/*.fastq.gz":
+-      - "compress/${prefix}/*.gfa":
 -          type: file
--          description: Subsampled reads produced by Autocycler.
--          pattern: "*/*.fastq.gz"
+-          description: Assembly graph files ready for clustering.
+-          pattern: "compress/*/*.gfa"
 -          ontologies:
--            - edam: "http://edamontology.org/format_1930" # FASTQ
--            - edam: "http://edamontology.org/format_3989" # GZIP
-+        - edam: "http://edamontology.org/format_1930"
-+        - edam: "http://edamontology.org/format_3989"
+-            - edam: "http://edamontology.org/format_3975" #GFA1
+-
+-  stats:
+-    - - meta:
+-          type: map
+-          description: |
+-            Groovy Map containing sample information
+-            e.g. `[ id:'sample1' ]`
+-      - "compress/${prefix}/*.yaml":
+-          type: file
+-          description: Summary statistics generated during compression.
+-          pattern: "compress/*/*.yaml"
+-          ontologies:
+-            - edam: "http://edamontology.org/format_3750" # YAML
++        - edam: "http://edamontology.org/format_3750"
    versions_autocycler:
 -    - - ${task.process}:
 -          type: string
@@ -170,9 +156,24 @@ Changes in 'autocycler/subsample/meta.yml':
 -  - "@dwells-eit"
 +- "@dwells-eit"
 
-Changes in 'autocycler/subsample/environment.yml':
---- modules/nf-core/autocycler/subsample/environment.yml
-+++ modules/nf-core/autocycler/subsample/environment.yml
+Changes in 'autocycler/compress/main.nf':
+--- modules/nf-core/autocycler/compress/main.nf
++++ modules/nf-core/autocycler/compress/main.nf
+@@ -5,8 +5,8 @@
+ 
+     conda "${moduleDir}/environment.yml"
+     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
+-        'https://depot.galaxyproject.org/singularity/autocycler:0.5.2--h3ab6199_0':
+-        'quay.io/biocontainers/autocycler:0.5.2--h3ab6199_0' }"
++        'https://depot.galaxyproject.org/singularity/autocycler:0.8.0--h79ce301_0':
++        'quay.io/biocontainers/autocycler:0.8.0--h79ce301_0' }"
+ 
+     input:
+     tuple val(meta), path(assemblies)
+
+Changes in 'autocycler/compress/environment.yml':
+--- modules/nf-core/autocycler/compress/environment.yml
++++ modules/nf-core/autocycler/compress/environment.yml
 @@ -4,4 +4,4 @@
    - conda-forge
    - bioconda
@@ -180,7 +181,6 @@ Changes in 'autocycler/subsample/environment.yml':
 -  - "bioconda::autocycler=0.5.2"
 +  - "bioconda::autocycler=0.8.0"
 
-'modules/nf-core/autocycler/subsample/tests/nextflow.config' is unchanged
-'modules/nf-core/autocycler/subsample/tests/main.nf.test' is unchanged
-'modules/nf-core/autocycler/subsample/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/autocycler/compress/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/autocycler/compress/tests/main.nf.test' is unchanged
 ************************************************************
