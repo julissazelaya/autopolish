@@ -15,10 +15,10 @@
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
 include { AUTOPOLISH              } from './workflows/autopolish'
+include { assemblerModes          } from './subworkflows/local/draft_assembly'
 include { PIPELINE_COMPLETION     } from './subworkflows/local/utils_nfcore_autopolish_pipeline'
 include { UTILS_NFCORE_PIPELINE   } from './subworkflows/nf-core/utils_nfcore_pipeline'
 include { UTILS_NEXTFLOW_PIPELINE } from './subworkflows/nf-core/utils_nextflow_pipeline'
-
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     HELP TEXT
@@ -62,9 +62,15 @@ def helpText() {
         --min_read_depth    Minimum read depth for assembly [default: 50]
         --read_type         Read type passed to assemblers [default: ont_r10]
         --flye_mode         Flye assembly mode [default: --nano-hq]
-        --assembler_set     Assembler preset [default: standard]
-                            standard: Flye, metaMDBG, miniasm, Plassembler, Raven
-                            extended: standard + Canu
+        --assembler_mode    Assemblers to run [default: standard]
+                            standard  5 assemblers, 17 assemblies per sample
+                                      Flye, metaMDBG, miniasm, Raven (x4 subsets)
+                                      + Plassembler (x1, all reads)
+                            extended  6 assemblers, 21 assemblies per sample
+                                      standard + Canu (x4 subsets)
+                            fast      6 assemblers, 12 assemblies per sample
+                                      Flye, metaMDBG, miniasm, Myloasm, Plassembler,
+                                      Raven (x2 subsets), as autocycler_fast.sh
         --metamdbg_input_type
                             metaMDBG input type [default: ont]
         --plassembler_db    Path to Plassembler database
@@ -111,13 +117,13 @@ def helpText() {
             --run_name my_run \\
             -profile singularity,slurm
 
-+       # Add Canu to the assemblers
-+       nextflow run main.nf \\
-+           --input /path/to/fastqs/ \\
-+           --input_type fastq \\
-+           --assembler_set extended \\
-+           --run_name my_run \\
-+           -profile singularity,slurm
+        # Add Canu to the assemblers
+        nextflow run main.nf \\
+            --input /path/to/fastqs/ \\
+            --input_type fastq \\
+            --assembler_mode extended \\
+            --run_name my_run \\
+            -profile singularity,slurm
     =========================================
     """.stripIndent()
 }
@@ -188,11 +194,10 @@ workflow {
         params.outdir = "${params.analysis_base}/${params.run_name}"
     }
 
-    def valid_assembler_sets = ['standard', 'extended']
-        if (!(params.assembler_set?.toString()?.toLowerCase() in valid_assembler_sets)) {
-            error "Invalid --assembler_set '${params.assembler_set}'. Must be one of: ${valid_assembler_sets.join(', ')}"
-   }
-
+    def valid_assembler_modes = assemblerModes().keySet()
+    if (!(params.assembler_mode?.toString()?.toLowerCase() in valid_assembler_modes)) {
+        error "Invalid --assembler_mode '${params.assembler_mode}'. Must be one of: ${valid_assembler_modes.join(', ')}"
+    }
     //
     // Print version and exit if required, dump params to JSON
     //

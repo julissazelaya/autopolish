@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/nf-core/modules/master/modules/meta-schema.json
+name: "stageassemblies"
+description: Gathers one sample's input assemblies into a single assemblies/ folder for autocycler compress, decompressing .gz files and prefixing names so they can't clash
+keywords:
+  - assembly
+  - autocycler
+  - staging
+tools:
+  - "gzip":
+      description: "GNU gzip, used to decompress gzipped assemblies"
+      homepage: "https://www.gnu.org/software/gzip/"
+      documentation: "https://www.gnu.org/software/gzip/manual/"
+      licence: ["GPL-3.0-or-later"]
+      identifier: ""
+input:
+  - - meta:
+        type: map
+        description: |
+          Groovy Map containing sample information
+          e.g. `[ id:'barcode01' ]`
+    - fastas:
+        type: file
+        description: Input assemblies for one sample, plain or gzipped FASTA
+        pattern: "*.{fasta,fa,fna}{,.gz}"
+output:
+  assemblies:
+    - - meta:
+          type: map
+          description: |
+            Groovy Map containing sample information
+            e.g. `[ id:'barcode01' ]`
+      - "assemblies/*.fasta":
+          type: file
+          description: Uncompressed assemblies, each prefixed with its input_N folder
+          pattern: "assemblies/*.fasta"
+authors:
+  - "@julissazelaya"
+maintainers:
+  - "@julissazelaya"

@@ -3,17 +3,19 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+include { AUTOCYCLER_CANU        } from '../../../modules/local/autocycler/canu/main'          // NEW (assembler_mode)
 include { AUTOCYCLER_GENOMESIZE  } from '../../../modules/local/autocycler/genomesize/main'
 include { AUTOCYCLER_SUBSAMPLE   } from '../../../modules/nf-core/autocycler/subsample/main'
 include { AUTOCYCLER_MINIASM     } from '../../../modules/local/autocycler/miniasm/main'
+include { AUTOCYCLER_MYLOASM     } from '../../../modules/local/autocycler/myloasm/main'        // NEW (fast)
 include { AUTOCYCLER_WEIGHT as AUTOCYCLER_WEIGHT_PLASSEMBLER } from '../../../modules/local/autocycler/weight/main'
 include { AUTOCYCLER_WEIGHT as AUTOCYCLER_WEIGHT_FLYE        } from '../../../modules/local/autocycler/weight/main'
 include { FLYE                   } from '../../../modules/nf-core/flye/main'
 include { METAMDBG_ASM           } from '../../../modules/nf-core/metamdbg/asm/main'
 include { AUTOCYCLER_METAMDBGFILTER                          } from '../../../modules/local/autocycler/metamdbgfilter/main'
 include { AUTOCYCLER_PLASSEMBLER                             } from '../../../modules/local/autocycler/plassembler/main'
-include { AUTOCYCLER_CANU        } from '../../../modules/local/autocycler/canu/main'
 include { RAVEN                  } from '../../../modules/nf-core/raven/main'
+include { STAGEASSEMBLIES        } from '../../../modules/local/stageassemblies/main'
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     RUN SUBWORKFLOW
@@ -25,9 +27,9 @@ workflow DRAFT_ASSEMBLY {
         reads
 
     main:
-        def assemblers = assemblersForSet(params.assembler_set)
-        log.info "Assemblers (--assembler_set ${params.assembler_set}): ${assemblers.join(', ')}"
-        
+        def assemblers = assemblersForMode(params.assembler_mode)
+        log.info "Assemblers (--assembler_mode ${params.assembler_mode}): ${assemblers.join(', ')}"
+
         /*
         -------------------------------
         Flatten reads per barcode
@@ -92,17 +94,24 @@ workflow DRAFT_ASSEMBLY {
         Assemblers (parallel)
         -------------------------------
         */
-        flye_assembly      = FLYE(ch_assembler_reads, params.flye_mode)
-        metamdbg_assembly  = METAMDBG_ASM(ch_assembler_reads, params.metamdbg_input_type)
+        flye_assembly      = FLYE(ch_assembler_reads.filter { 'flye' in assemblers }, params.flye_mode)
+        metamdbg_assembly  = METAMDBG_ASM(ch_assembler_reads.filter { 'metamdbg' in assemblers }, params.metamdbg_input_type)
         metamdbg_filtered  = AUTOCYCLER_METAMDBGFILTER(metamdbg_assembly.contigs)
-        raven_assembly     = RAVEN(ch_assembler_reads)
-        miniasm_assembly   = AUTOCYCLER_MINIASM(ch_assembler_reads, ch_assembler_genomesize)
-
+        raven_assembly     = RAVEN(ch_assembler_reads.filter { 'raven' in assemblers })
+        miniasm_assembly   = AUTOCYCLER_MINIASM(
+            ch_assembler_reads.filter      { 'miniasm' in assemblers },
+            ch_assembler_genomesize.filter { 'miniasm' in assemblers }
+        )
+\       myloasm_assembly   = AUTOCYCLER_MYLOASM(ch_assembler_reads.filter { 'myloasm' in assemblers })
         canu_assembly      = AUTOCYCLER_CANU(
-        ch_assembler_reads.filter      { 'canu' in assemblers },
-        ch_assembler_genomesize.filter { 'canu' in assemblers })    
+            ch_assembler_reads.filter      { 'canu' in assemblers },
+            ch_assembler_genomesize.filter { 'canu' in assemblers }
+        )
 
-        ch_reads_for_plassembler = reads_with_size.map { meta, reads, size -> [ meta, reads, size ] }
+        def plassembler_per_subsample = params.assembler_mode?.toString()?.toLowerCase() == 'fast'
+        ch_reads_for_plassembler = (plassembler_per_subsample ? ch_subsampled_with_size : reads_with_size)
+            .map { meta, reads, size -> [ meta, reads, size ] }
+            .filter { 'plassembler' in assemblers }
         plassembler_assembly     = AUTOCYCLER_PLASSEMBLER(ch_reads_for_plassembler)
 
         /*
@@ -111,13 +120,16 @@ workflow DRAFT_ASSEMBLY {
         --------------------------------------------------------
         */
         plassembler_fasta_remapped = plassembler_assembly.fasta
-            .map { meta, fasta -> [ [id: "${meta.id}_plassembler", barcode: meta.id], fasta ] }
+            .map { meta, fasta ->
+                def barcode = meta.barcode ?: meta.id     // NEW (fast): per-subsample runs already carry barcode
+                [ [id: "${meta.id}_plassembler", barcode: barcode], fasta ]
+            }
 
         plassembler_weighted = AUTOCYCLER_WEIGHT_PLASSEMBLER(
             plassembler_fasta_remapped,
             'cluster'
         )
-        
+
         flye_weighted = AUTOCYCLER_WEIGHT_FLYE(
             flye_assembly.fasta,
             'consensus'
@@ -128,81 +140,37 @@ workflow DRAFT_ASSEMBLY {
             .mix(miniasm_assembly.fasta)
             .mix(plassembler_weighted.fasta)
             .mix(raven_assembly.fasta)
-            .mix(canu_assembly.fasta)
+            .mix(canu_assembly.fasta) 
+            .mix(myloasm_assembly.fasta)
             .map { meta, fasta -> [ meta.barcode, fasta ] }
             .groupTuple(remainder: true)
             .map { barcode, fastas -> [ [id: barcode], fastas ] }
 
-        assemblies = COLLECT_ASSEMBLIES(ch_all_assemblies)
+        assemblies = STAGEASSEMBLIES(ch_all_assemblies)
 
     emit:
         subsampled_reads = subsampled.subsampled_reads
         assemblies       = assemblies.assemblies
-        subsample_stats  = subsampled.stats 
+        subsample_stats  = subsampled.stats
         normalized_reads = ch_reads_flat
 }
 
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    ASSEMBLER SETS      
+    ASSEMBLER MODES  
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-def assemblerSets() {
+def assemblerModes() {
     def standard = [ 'flye', 'metamdbg', 'miniasm', 'plassembler', 'raven' ]
     def extended = standard + [ 'canu' ]
-    return [ standard: standard, extended: extended ]
+    def fast     = standard + [ 'myloasm' ]                                     // NEW (fast)
+    return [ standard: standard, extended: extended, fast: fast ]
 }
- 
-//
-// Resolve a preset name to its list of assemblers. nextflow_schema.json already rejects
-// other values; this check covers runs where validation is switched off.
-//
-def assemblersForSet(assembler_set) {
-    def sets = assemblerSets()
-    def name = assembler_set?.toString()?.toLowerCase()
-    if (!sets.containsKey(name)) {
-        error("Unknown --assembler_set '${assembler_set}'. Choose one of: ${sets.keySet().join(', ')}")
+def assemblersForMode(assembler_mode) {
+    def modes = assemblerModes()
+    def name = assembler_mode?.toString()?.toLowerCase()
+    if (!modes.containsKey(name)) {
+        error("Unknown --assembler_mode '${assembler_mode}'. Choose one of: ${modes.keySet().join(', ')}")
     }
-    return sets[name]
-}
- 
-/*
-
-
-/*
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    LOCAL PROCESS: COLLECT_ASSEMBLIES
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-*/
-process COLLECT_ASSEMBLIES {
-    tag "$meta.id"
-    label 'process_single'
-
-    input:
-    tuple val(meta), path(fastas, stageAs: "input_?/*")
-
-    output:
-    tuple val(meta), path("assemblies/*.fasta"), emit: assemblies
-
-    script:
-    """
-    mkdir -p assemblies
-    for input_dir in input_*/; do
-        idx=\$(basename \$input_dir)
-        for fasta in \$input_dir*; do
-            fname=\$(basename \$fasta)
-            if [[ \$fasta == *.gz ]]; then
-                gunzip -c \$fasta > assemblies/\${idx}_\${fname%.gz}
-            else
-                cp \$fasta assemblies/\${idx}_\${fname}
-            fi
-        done
-    done
-    """
-
-    stub:
-    """
-    mkdir -p assemblies
-    touch assemblies/stub.fasta
-    """
+    return modes[name]
 }

@@ -77,11 +77,11 @@
             "description": "",
             "default": "",
             "properties": {
-                "assembler_set": {
+                "assembler_mode": {
                     "type": "string",
                     "default": "standard",
-                    "enum": ["standard", "extended"],
-                    "description": "Assembler preset: standard (Flye, metaMDBG, miniasm, Plassembler, Raven) or extended (standard plus Canu)"
+                    "enum": ["standard", "extended", "fast"],
+                    "description": "Assemblers to run: standard (Flye, metaMDBG, miniasm, Raven on 4 read subsets plus Plassembler; 17 assemblies per sample), extended (standard plus Canu; 21) or fast (Flye, metaMDBG, miniasm, Myloasm, Plassembler, Raven on 2 read subsets, as autocycler_fast.sh; 12)"
                 },
                 "min_read_depth": {
                     "type": "integer",
