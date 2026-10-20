@@ -1,36 +1,44 @@
+// Ported from epi2me-labs/wf-basecalling v1.5.9 (lib/signal/ingress.nf, process dorado).
+// This Source Code Form is subject to the terms of the Oxford Nanopore
+// Technologies PLC. Public License, v. 1.0. Full licence can be found
+// obtained from support@nanoporetech.com (copy in subworkflows/local/dorado_basecalling/LICENSE_ONT)
+
 process DORADO_BASECALLER {
     tag "$meta.id"
-    label 'process_high'
     label 'process_gpu'
-
-    container "docker.io/nanoporetech/dorado:shae423e761540b9d08b526a1eb32faf498f32e8f22"
+    // Same image as wf-basecalling; it ships the Dorado models under $DRD_MODELS_PATH
+    container 'ontresearch/dorado:shac8f356489fa8b44b31beba841b84d2879de2088e'
 
     input:
-    tuple val(meta), 
-    path(pod5)
+    tuple val(meta), path(pod5s, stageAs: 'pod5/*')
+    val model        // e.g. 'dna_r10.4.1_e8.2_400bps_sup@v5.2.0'
+    path model_dir   // [] to use the model from the container; a folder to override it
+    val kit          // barcoding kit, e.g. 'SQK-NBD114-96'; '' for none
 
     output:
-    tuple val(meta), path("${meta.id}.bam"), emit: bam
-    path "versions.yml", emit: versions
+    tuple val(meta), path("${prefix}.ubam"), emit: ubam
+    tuple val("${task.process}"), val('dorado'), eval("dorado --version 2>&1 | head -n1"), emit: versions_dorado, topic: versions
+
+    when:
+    task.ext.when == null || task.ext.when
 
     script:
-    def args   = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def mods   = params.dorado_modifications ? "--modified-bases ${params.dorado_modifications}" : ""
-    def device = task.ext.use_gpu ? "--device cuda:all" : ""
+    def args      = task.ext.args ?: ''   // e.g. '--device cuda:all' (set in conf/modules.config)
+    prefix        = task.ext.prefix ?: "${meta.id}"
+    def model_arg = model_dir ? "${model_dir}" : "\${DRD_MODELS_PATH}/${model}"
+    def kit_arg   = kit ? "--kit-name ${kit}" : ''
     """
     dorado basecaller \\
-        ${params.dorado_models_dir}/${params.dorado_model} \\
-        ${pod5} \\
-        --kit-name ${params.barcode_kit} \\
-        ${mods} \\
-        ${device} \\
+        ${model_arg} \\
+        pod5/ \\
+        ${kit_arg} \\
         ${args} \\
-        > ${prefix}.bam
+        | samtools view --no-PG -b -o ${prefix}.ubam -
+    """
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        dorado: \$(dorado --version 2>&1 | head -n1)
-    END_VERSIONS
+    stub:
+    prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.ubam
     """
 }

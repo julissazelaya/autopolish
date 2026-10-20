@@ -77,6 +77,16 @@
                         "installed_by": ["modules"],
                         "patch": "modules/nf-core/samtools/addreplacerg/samtools-addreplacerg.diff"
                     },
+                    "samtools/cat": {
+                        "branch": "master",
+                        "git_sha": "5f344f0e41fdfaf2506f89400e42a2689d6ab323",
+                        "installed_by": ["modules"]
+                    },
+                    "samtools/fastq": {
+                        "branch": "master",
+                        "git_sha": "5f344f0e41fdfaf2506f89400e42a2689d6ab323",
+                        "installed_by": ["modules"]
+                    },
                     "samtools/index": {
                         "branch": "master",
                         "git_sha": "6d46786420b4d7bc88eba026eb389c0c5535d120",
