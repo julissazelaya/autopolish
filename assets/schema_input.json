@@ -1,0 +1,147 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/autopolish/master/assets/schema_input.json",
+    "title": "Autopolish long-read sample sheet",
+    "description": "One row per barcode, written by bin/read_run_sheet.py from the lab's MinION/PromethION run sheet",
+    "type": "array",
+    "items": {
+        "type": "object",
+        "properties": {
+            "sample": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9.-][A-Za-z0-9._-]*$",
+                "errorMessage": "sample (MRSN ID) may only use letters, numbers, '.', '_' and '-'",
+                "meta": [
+                    "id"
+                ]
+            },
+            "barcode": {
+                "type": "string",
+                "pattern": "^barcode(0[1-9]|[1-8][0-9]|9[0-6])$",
+                "errorMessage": "barcode must be barcode01 to barcode96",
+                "meta": [
+                    "barcode"
+                ]
+            },
+            "type": {
+                "type": "string",
+                "enum": [
+                    "test_sample",
+                    "positive_control",
+                    "negative_control"
+                ],
+                "default": "test_sample",
+                "meta": [
+                    "type"
+                ]
+            },
+            "organism": {
+                "type": "string",
+                "meta": [
+                    "organism"
+                ],
+                "default": ""
+            },
+            "organism_group": {
+                "type": "string",
+                "enum": [
+                    "bacteria",
+                    "fungi"
+                ],
+                "default": "bacteria",
+                "meta": [
+                    "organism_group"
+                ]
+            },
+            "organism_raw": {
+                "type": "string",
+                "meta": [
+                    "organism_raw"
+                ],
+                "default": ""
+            },
+            "run": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9.-][A-Za-z0-9._-]*$",
+                "errorMessage": "run name may only use letters, numbers, '.', '_' and '-'",
+                "meta": [
+                    "run"
+                ]
+            },
+            "well": {
+                "type": "string",
+                "meta": [
+                    "well"
+                ],
+                "default": ""
+            },
+            "kit": {
+                "type": "string",
+                "pattern": "^(SQK|EXP)-[A-Z0-9]+(-[0-9]+)?$",
+                "errorMessage": "kit should look like SQK-NBD114-96",
+                "meta": [
+                    "kit"
+                ]
+            },
+            "flow_cell_type": {
+                "type": "string",
+                "meta": [
+                    "flow_cell_type"
+                ],
+                "default": ""
+            },
+            "flow_cell_id": {
+                "type": "string",
+                "meta": [
+                    "flow_cell_id"
+                ],
+                "default": ""
+            },
+            "run_date": {
+                "type": "string",
+                "meta": [
+                    "run_date"
+                ],
+                "default": ""
+            },
+            "library_prep": {
+                "type": "string",
+                "meta": [
+                    "library_prep"
+                ],
+                "default": ""
+            },
+            "illumina_run": {
+                "type": "string",
+                "meta": [
+                    "illumina_run"
+                ],
+                "default": ""
+            },
+            "description": {
+                "type": "string",
+                "meta": [
+                    "description"
+                ],
+                "default": ""
+            }
+        },
+        "required": [
+            "sample",
+            "barcode",
+            "run"
+        ]
+    },
+    "allOf": [
+        {
+            "uniqueEntries": [
+                "sample"
+            ]
+        },
+        {
+            "uniqueEntries": [
+                "barcode"
+            ]
+        }
+    ]
+}
