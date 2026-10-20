@@ -38,8 +38,9 @@ def helpText() {
     REQUIRED
     -----------------------------------------------------------------------
         --input             Path to directory containing input files
-                            (for wf_basecalling: the wf-basecalling output folder)
-        --input_type        Input file type: 'fastq', 'bam', 'pod5', 'wf_basecalling'
+                            (for wf_basecalling: a wf-basecalling or MinKNOW output
+                            folder with demultiplexed barcodeNN/*.bam)
+        --input_type        Input file type: 'pod5', 'wf_basecalling', 'fastq'
         --run_name          Short name for this run; output goes to
                             <analysis_base>/<run_name>
                             [default base: /mrsnStorage/projects/Autopolish/analysis]
@@ -48,8 +49,8 @@ def helpText() {
     -----------------------------------------------------------------------
     RUN SHEET  (pod5 and wf_basecalling input)
     -----------------------------------------------------------------------
-        --run_sheet         Run sheet (.xlsx as the lab fills it in) or sample
-                            sheet (.csv). Names each barcode by MRSN ID and gives
+        --run_sheet         Run sheet (.xls) or sample sheet (.csv).
+                            Names each barcode by MRSN ID and gives
                             the barcoding kit. Required for pod5 and wf_basecalling
 
     -----------------------------------------------------------------------
@@ -158,6 +159,7 @@ def helpText() {
 }
 
 
+
 /*
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     NAMED WORKFLOWS FOR PIPELINE
@@ -201,7 +203,7 @@ workflow {
               "Run with --help to see usage."
     }
 
-    def valid_input_types = ['fastq', 'bam', 'pod5']
+    def valid_input_types = ['fastq', 'pod5']
     if (!(params.input_type in valid_input_types)) {
         error "Invalid --input_type '${params.input_type}'. Must be one of: ${valid_input_types.join(', ')}"
     }

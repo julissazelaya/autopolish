@@ -16,13 +16,13 @@
                     "type": "string",
                     "format": "path",
                     "exists": true,
-                    "description": "Input folder: POD5s (pod5), BAMs (bam), FASTQs (fastq), or a wf-basecalling output folder (wf_basecalling).",
+                    "description": "Input folder: POD5s (pod5), FASTQs (fastq), or a wf-basecalling output folder (wf_basecalling).",
                     "fa_icon": "fas fa-folder-open"
                 },
                 "input_type": {
                     "type": "string",
-                    "enum": ["fastq", "pod5", "bam", "wf_basecalling"],
-                    "description": "Input file type: fastq, pod5, bam, or wf_basecalling"
+                    "enum": ["fastq", "pod5", "wf_basecalling"],
+                    "description": "Input file type: fastq, pod5, or wf_basecalling"
                 },
                 "outdir": {
                     "type": "string",

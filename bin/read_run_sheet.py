@@ -16,12 +16,28 @@ import sys
 
 import openpyxl
 
-# Genera routed as fungi. Anything else is treated as bacteria.
+# Genera grouped as fungi. Anything else is grouped as bacteria.
 FUNGAL_GENERA = {
     "aspergillus", "candida", "candidozyma", "clavispora", "cryptococcus", "debaryomyces",
     "fusarium", "kluyveromyces", "meyerozyma", "nakaseomyces", "pichia", "rhodotorula",
     "saccharomyces", "trichosporon", "wickerhamomyces",
 }
+
+# Fungal species, so an abbreviated name such as 'C. auris' is grouped as fungi by its
+# initial and species name. Add a species here if the lab starts sequencing it.
+FUNGAL_SPECIES = {
+    "candida albicans", "candida auris", "candida dubliniensis", "candida famata",
+    "candida glabrata", "candida guilliermondii", "candida haemulonii", "candida kefyr",
+    "candida krusei", "candida lusitaniae", "candida parapsilosis", "candida tropicalis",
+    "candidozyma auris", "candidozyma haemulonii", "candidozyma duobushaemulonii",
+    "clavispora lusitaniae", "cryptococcus gattii", "cryptococcus neoformans",
+    "debaryomyces hansenii", "kluyveromyces marxianus", "meyerozyma guilliermondii",
+    "nakaseomyces glabratus", "nakaseomyces glabrata", "pichia kudriavzevii",
+    "rhodotorula mucilaginosa", "saccharomyces cerevisiae", "trichosporon asahii",
+    "wickerhamomyces anomalus", "aspergillus flavus", "aspergillus fumigatus",
+    "aspergillus niger", "aspergillus terreus", "fusarium oxysporum", "fusarium solani",
+}
+FUNGAL_ABBREVIATED = {(s[0], s.split()[1]) for s in FUNGAL_SPECIES}
 
 # Run header labels (lower case, without ':') -> output column
 HEADER_FIELDS = {
@@ -32,12 +48,12 @@ HEADER_FIELDS = {
     "flow cell number": "flow_cell_id",
 }
 
-# Sample table columns (lower case) -> output column.
+# Sample table columns (lower case) -> output column. CHCS/Other is left out on purpose.
 TABLE_COLUMNS = {
     "well": "well",
     "mrsn #": "mrsn",
     "description": "description",
-    "organism": "organism_raw",
+    "organism": "organism",
     "barcode": "barcode",
     "library prep": "library_prep",
     "corresponding illumina run": "illumina_run",
@@ -45,7 +61,7 @@ TABLE_COLUMNS = {
 REQUIRED_COLUMNS = ["well", "mrsn #", "organism", "barcode"]
 
 OUTPUT_COLUMNS = [
-    "sample", "barcode", "type", "organism", "organism_group", "organism_raw", "run", "well",
+    "sample", "barcode", "type", "organism", "organism_group", "run", "well",
     "kit", "flow_cell_type", "flow_cell_id", "run_date", "library_prep", "illumina_run",
     "description",
 ]
@@ -108,18 +124,19 @@ def parse_date(value):
     return value
 
 
-def normalise_organism(raw, genera):
-    """'K. pneumoniae' -> 'Klebsiella pneumoniae', using full genus names seen on the same sheet."""
-    words = raw.replace("_", " ").split()
+def organism_group(organism):
+    """'fungi' or 'bacteria', from the organism name as typed. Only reads the name; the
+    organism column is written to the CSV unchanged."""
+    words = organism.replace("_", " ").lower().split()
     if not words:
-        return ""
+        return "bacteria"
     genus = words[0]
-    if re.fullmatch(r"[A-Za-z]\.", genus):
-        matches = sorted(g for g in genera if g[0].lower() == genus[0].lower())
-        if len(matches) == 1:
-            genus = matches[0]
-    words = [genus.capitalize()] + [w.lower() for w in words[1:]]
-    return " ".join(words)
+    if genus in FUNGAL_GENERA:
+        return "fungi"
+    # Abbreviated genus ('C. auris'): match the initial and species name
+    if re.fullmatch(r"[a-z]\.", genus) and len(words) > 1 and (genus[0], words[1]) in FUNGAL_ABBREVIATED:
+        return "fungi"
+    return "bacteria"
 
 
 def sample_type(mrsn, organism):
@@ -182,16 +199,12 @@ def main(xlsx, out_csv):
                 die(f"{r[key]} is on rows {seen[r[key]]} and {r['row']}; each MRSN and barcode can appear once per run")
             seen[r[key]] = r["row"]
 
-    genera = {r["organism_raw"].split()[0] for r in rows
-              if r["organism_raw"] and not r["organism_raw"].split()[0].endswith(".")}
     with open(out_csv, "w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=OUTPUT_COLUMNS, extrasaction="ignore")
         writer.writeheader()
         for r in rows:
-            r["organism"] = normalise_organism(r["organism_raw"], genera)
-            genus = r["organism"].split()[0].lower() if r["organism"] else ""
-            r["organism_group"] = "fungi" if genus in FUNGAL_GENERA else "bacteria"
-            r["type"] = sample_type(r["mrsn"], r["organism_raw"])
+            r["organism_group"] = organism_group(r["organism"])
+            r["type"] = sample_type(r["mrsn"], r["organism"])
             writer.writerow({**{c: "" for c in OUTPUT_COLUMNS}, **run, **r})
 
     groups = {}

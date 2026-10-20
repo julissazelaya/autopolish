@@ -123,6 +123,12 @@ if grep -qE "\[[^]]*'pod5'[^]]*\]" main.nf; then
     has main.nf "'wf_basecalling'" "input_type list in main.nf includes wf_basecalling"
 fi
 
+echo "== B7 bam input type dropped"
+if grep -qE "input_type[[:space:]]*==[[:space:]]*'bam'|DEMUX\\(" workflows/autopolish.nf; then bad "workflows/autopolish.nf still has the bam branch / DEMUX call"
+else ok "no bam branch or DEMUX call in workflows/autopolish.nf"; fi
+if grep -A3 -F '"input_type"' nextflow_schema.json | grep -qF '"bam"'; then bad "nextflow_schema.json input_type enum still lists bam"
+else ok "input_type enum has no bam"; fi
+
 echo "== B6 subworkflows/local/draft_assembly/main.nf"
 D=subworkflows/local/draft_assembly/main.nf
 has "$D" 'meta?.run ? meta.id' 'DRAFT_ASSEMBLY names run sheet reads from meta.id'

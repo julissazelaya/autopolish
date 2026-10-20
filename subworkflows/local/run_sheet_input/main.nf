@@ -26,6 +26,7 @@ workflow RUN_SHEET_INPUT {
             READRUNSHEET(sheet_file)
             ch_samples = READRUNSHEET.out.csv
                 .flatMap { csv ->
+                    // Inside a channel, nf-schema's error only reaches .nextflow.log; print it here too
                     try {
                         samplesheetToList(csv, schema)
                     } catch (e) {
@@ -34,6 +35,7 @@ workflow RUN_SHEET_INPUT {
                 }
                 .map { row -> row[0] }
         } else if (sheet_file.name.toLowerCase().endsWith('.csv')) {
+            // Already a sample sheet: checked at launch
             ch_samples = channel.fromList(samplesheetToList(sheet_file, schema)).map { row -> row[0] }
         } else {
             error "Run sheet must be .xlsx or .csv: ${run_sheet}"
@@ -45,6 +47,16 @@ workflow RUN_SHEET_INPUT {
             .subscribe { groups ->
                 log.info "Run sheet ${sheet_file.name}: ${groups.size()} samples (" +
                     groups.countBy { it }.collect { group, n -> "${n} ${group}" }.join(', ') + ")"
+            }
+
+        // An abbreviated genus ('K. pneumoniae') is grouped as fungi only if its species is in
+        // FUNGAL_SPECIES in bin/read_run_sheet.py; list the rest so a missing fungus is noticed
+        ch_samples
+            .filter { meta -> meta.organism_group == 'bacteria' && meta.organism ==~ /(?i)[a-z]\.[ _].*/ }
+            .map { meta -> "${meta.id} (${meta.organism})" }
+            .collect()
+            .subscribe { names ->
+                log.warn "Grouped as bacteria from an abbreviated genus name; check none are fungi: ${names.join(', ')}"
             }
 
         // The barcoding kit from the run sheet header, for Dorado. One kit per run.

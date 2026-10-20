@@ -53,13 +53,6 @@
                     "organism_group"
                 ]
             },
-            "organism_raw": {
-                "type": "string",
-                "meta": [
-                    "organism_raw"
-                ],
-                "default": ""
-            },
             "run": {
                 "type": "string",
                 "pattern": "^[A-Za-z0-9.-][A-Za-z0-9._-]*$",
