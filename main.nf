@@ -47,11 +47,13 @@ def helpText() {
         --outdir            Full output path, overrides --run_name if set
 
     -----------------------------------------------------------------------
-    RUN SHEET  (pod5 and wf_basecalling input)
+    RUN SHEET
     -----------------------------------------------------------------------
-        --run_sheet         Run sheet (.xls) or sample sheet (.csv).
-                            Names each barcode by MRSN ID and gives
-                            the barcoding kit. Required for pod5 and wf_basecalling
+        --run_sheet         Run sheet (.xlsx as the lab fills it in) or sample
+                            sheet (.csv). Names each barcode by MRSN ID, gives
+                            the barcoding kit and marks fungi. Required for pod5
+                            and wf_basecalling; optional for fastq (files named
+                            by MRSN ID or barcode, e.g. barcode01.fastq.gz)
 
     -----------------------------------------------------------------------
     BASECALLING & DEMULTIPLEXING  (pod5 input only; as in wf-basecalling)
@@ -84,6 +86,8 @@ def helpText() {
                             fast      6 assemblers, 12 assemblies per sample
                                       Flye, metaMDBG, miniasm, Myloasm, Plassembler,
                                       Raven (x2 subsets), as autocycler_fast.sh
+                            Fungi on the run sheet always get Flye only
+                            (x4 subsets), then Autocycler as usual
         --metamdbg_input_type
                             metaMDBG input type [default: ont]
         --plassembler_db    Path to Plassembler database

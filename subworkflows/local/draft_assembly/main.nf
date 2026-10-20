@@ -29,13 +29,20 @@ workflow DRAFT_ASSEMBLY {
     main:
         def assemblers = assemblersForMode(params.assembler_mode)
         log.info "Assemblers (--assembler_mode ${params.assembler_mode}): ${assemblers.join(', ')}"
+        log.info "Assemblers for fungi (organism_group 'fungi' on the run sheet): ${fungiAssemblers().join(', ')}, 4 read subsets"
+
+        // Fungi only get fungiAssemblers() (Flye); everything else gets --assembler_mode's
+        def fungi_assemblers = fungiAssemblers()
+        def runsAssembler = { meta, name ->
+            meta.organism_group == 'fungi' ? name in fungi_assemblers : name in assemblers
+        }
 
         /*
         -------------------------------
         Flatten reads per barcode
         -------------------------------
         */
-        ch_reads_flat = reads
+        ch_reads_named = reads
             .map { meta, fastq ->
                 def fq = fastq instanceof List ? fastq[0] : fastq
                 // Run sheet reads (meta.run is set): the MRSN ID is meta.id.
@@ -43,8 +50,11 @@ workflow DRAFT_ASSEMBLY {
                 def barcode = meta?.run ? meta.id : fq.name.toString()
                     .replaceAll('.fastq', '')
                     .replaceAll('.gz', '')
-                [ [id: barcode], fq ]
+                [ [id: barcode], fq, meta?.organism_group ?: 'bacteria' ]
             }
+
+        ch_reads_flat      = ch_reads_named.map { meta, fq, group -> [ meta, fq ] }
+        ch_organism_groups = ch_reads_named.map { meta, fq, group -> [ meta.id, group ] }
 
         /*
         -------------------------------
@@ -55,7 +65,9 @@ workflow DRAFT_ASSEMBLY {
 
         reads_with_size = ch_reads_flat
             .join(genome_size.genome_size.map { meta, size -> [ meta, size.trim() ] })
-            .map { meta, reads, size -> [ meta, reads, size ] }
+            .map { meta, reads, size -> [ meta.id, meta, reads, size ] }
+            .join(ch_organism_groups)
+            .map { id, meta, reads, size, group -> [ meta + [organism_group: group], reads, size ] }
 
         ch_reads = reads_with_size.map { meta, reads, size ->
             [ meta, reads instanceof List ? reads[0] : reads ]
@@ -78,7 +90,7 @@ workflow DRAFT_ASSEMBLY {
             .transpose()
             .map { meta, fastq ->
                 def sample_name = fastq.name.toString().replaceAll('.fastq.gz', '')
-                [ [id: "${meta.id}_${sample_name}", barcode: meta.id], fastq ]
+                [ [id: "${meta.id}_${sample_name}", barcode: meta.id, organism_group: meta.organism_group], fastq ]
             }
 
         ch_subsampled_with_size = ch_subsampled_flat
@@ -89,32 +101,29 @@ workflow DRAFT_ASSEMBLY {
             )
             .map { barcode, meta, fastq, size -> [ meta, fastq, size ] }
 
-        ch_assembler_reads      = ch_subsampled_with_size.map { meta, fastq, size -> [ meta, fastq ] }
-        ch_assembler_genomesize = ch_subsampled_with_size.map { meta, fastq, size -> size }
+        // One channel per assembler, holding only the subsamples that assembler runs on
+        def forAssembler = { name ->
+            ch_subsampled_with_size.filter { meta, fastq, size -> runsAssembler(meta, name) }
+        }
+        def readsFor = { name -> forAssembler(name).map { meta, fastq, size -> [ meta, fastq ] } }
+        def sizeFor  = { name -> forAssembler(name).map { meta, fastq, size -> size } }
 
         /*
         -------------------------------
         Assemblers (parallel)
         -------------------------------
         */
-        flye_assembly      = FLYE(ch_assembler_reads.filter { 'flye' in assemblers }, params.flye_mode)
-        metamdbg_assembly  = METAMDBG_ASM(ch_assembler_reads.filter { 'metamdbg' in assemblers }, params.metamdbg_input_type)
+        flye_assembly      = FLYE(readsFor('flye'), params.flye_mode)
+        metamdbg_assembly  = METAMDBG_ASM(readsFor('metamdbg'), params.metamdbg_input_type)
         metamdbg_filtered  = AUTOCYCLER_METAMDBGFILTER(metamdbg_assembly.contigs)
-        raven_assembly     = RAVEN(ch_assembler_reads.filter { 'raven' in assemblers })
-        miniasm_assembly   = AUTOCYCLER_MINIASM(
-            ch_assembler_reads.filter      { 'miniasm' in assemblers },
-            ch_assembler_genomesize.filter { 'miniasm' in assemblers }
-        )
-        myloasm_assembly   = AUTOCYCLER_MYLOASM(ch_assembler_reads.filter { 'myloasm' in assemblers })
-        canu_assembly      = AUTOCYCLER_CANU(
-            ch_assembler_reads.filter      { 'canu' in assemblers },
-            ch_assembler_genomesize.filter { 'canu' in assemblers }
-        )
+        raven_assembly     = RAVEN(readsFor('raven'))
+        miniasm_assembly   = AUTOCYCLER_MINIASM(readsFor('miniasm'), sizeFor('miniasm'))
+        myloasm_assembly   = AUTOCYCLER_MYLOASM(readsFor('myloasm'))
+        canu_assembly      = AUTOCYCLER_CANU(readsFor('canu'), sizeFor('canu'))
 
         def plassembler_per_subsample = params.assembler_mode?.toString()?.toLowerCase() == 'fast'
         ch_reads_for_plassembler = (plassembler_per_subsample ? ch_subsampled_with_size : reads_with_size)
-            .map { meta, reads, size -> [ meta, reads, size ] }
-            .filter { 'plassembler' in assemblers }
+            .filter { meta, reads, size -> runsAssembler(meta, 'plassembler') }
         plassembler_assembly     = AUTOCYCLER_PLASSEMBLER(ch_reads_for_plassembler)
 
         /*
@@ -124,7 +133,7 @@ workflow DRAFT_ASSEMBLY {
         */
         plassembler_fasta_remapped = plassembler_assembly.fasta
             .map { meta, fasta ->
-                def barcode = meta.barcode ?: meta.id     // NEW (fast): per-subsample runs already carry barcode
+                def barcode = meta.barcode ?: meta.id
                 [ [id: "${meta.id}_plassembler", barcode: barcode], fasta ]
             }
 
@@ -152,9 +161,9 @@ workflow DRAFT_ASSEMBLY {
         assemblies = STAGEASSEMBLIES(ch_all_assemblies)
 
     emit:
-        subsampled_reads = subsampled.subsampled_reads
+        subsampled_reads = subsampled.subsampled_reads.map { meta, fastqs -> [ [id: meta.id], fastqs ] }
         assemblies       = assemblies.assemblies
-        subsample_stats  = subsampled.stats
+        subsample_stats  = subsampled.stats.map { meta, yaml -> [ [id: meta.id], yaml ] }
         normalized_reads = ch_reads_flat
 }
 
@@ -163,6 +172,13 @@ workflow DRAFT_ASSEMBLY {
     ASSEMBLER MODES  
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
+// Fungi (organism_group 'fungi' from the run sheet) are assembled with Flye only, on 4 read
+// subsets, whatever --assembler_mode is. 
+// The subset count for fungi is set in conf/modules.config (AUTOCYCLER_SUBSAMPLE).
+def fungiAssemblers() {
+    return [ 'flye' ]
+}
+
 def assemblerModes() {
     def standard = [ 'flye', 'metamdbg', 'miniasm', 'plassembler', 'raven' ]
     def extended = standard + [ 'canu' ]

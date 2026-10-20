@@ -34,8 +34,28 @@ workflow AUTOPOLISH {
                 [ [id: barcode_id], fastq ]
             }
             .filter { meta, fastq -> !fastq.name.contains('unclassified') }
-            .set { ch_reads }
+            .set { ch_fastq }
 
+        if (params.run_sheet) {
+            // Optional for fastq: a file named by MRSN ID (MRSN182588.fastq.gz) or barcode
+            // (barcode01.fastq.gz) gets that run sheet row's details, so fungi are recognised
+            RUN_SHEET_INPUT(params.run_sheet)
+            ch_sheet_keys = RUN_SHEET_INPUT.out.samples
+                .flatMap { meta -> [ [ meta.id, meta ], [ meta.barcode, meta ] ] }
+            ch_reads = ch_fastq
+                .map { meta, fastq -> [ meta.id, fastq ] }
+                .join(ch_sheet_keys, remainder: true)
+                .filter { name, fastq, meta -> fastq != null }   // run sheet rows with no file
+                .map { name, fastq, meta ->
+                    if (meta == null) {
+                        log.warn "${name}: not on the run sheet, assembled as bacteria"
+                        return [ [id: name], fastq ]
+                    }
+                    [ meta, fastq ]
+                }
+        } else {
+            ch_reads = ch_fastq
+        }
     } else if (params.input_type in ['pod5', 'wf_basecalling']) {
         // The run sheet names each barcode (MRSN ID) and gives the barcoding kit
         if (!params.run_sheet) {
@@ -44,7 +64,7 @@ workflow AUTOPOLISH {
         RUN_SHEET_INPUT(params.run_sheet)
 
         if (params.input_type == 'pod5') {
-            // Dorado basecalling + demux, ported from wf-basecalling
+            // Dorado basecalling + demux from wf-basecalling
             ch_kit = params.barcode_kit ? channel.value(params.barcode_kit) : RUN_SHEET_INPUT.out.kit
             DORADO_BASECALLING(
                 params.input,

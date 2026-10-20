@@ -45,7 +45,7 @@
                     "format": "file-path",
                     "exists": true,
                     "pattern": "^\\S+\\.(xlsx|csv)$",
-                    "description": "MinION/PromethION run sheet (.xlsx as the lab fills it in) or a sample sheet .csv",
+                    "description": "Run sheet (.xlsx) or sample sheet (.csv). Required for pod5 and wf_basecalling; optional for fastq",
                     "fa_icon": "fas fa-file-excel"
                 },
                 "basecaller_cfg": {
