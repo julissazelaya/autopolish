@@ -3,8 +3,9 @@
     IMPORT MODULES / SUBWORKFLOWS / FUNCTIONS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 */
-include { BASECALLING     } from '../subworkflows/local/basecalling/main'
-include { DEMUX           } from '../subworkflows/local/demux/main'
+include { RUN_SHEET_INPUT    } from '../subworkflows/local/run_sheet_input/main'
+include { DORADO_BASECALLING } from '../subworkflows/local/dorado_basecalling/main'
+include { BARCODE_READS      } from '../subworkflows/local/barcode_reads/main'include { DEMUX           } from '../subworkflows/local/demux/main'
 include { DRAFT_ASSEMBLY  } from '../subworkflows/local/draft_assembly/main'
 include { AUTOCYCLER      } from '../subworkflows/local/autocycler/main'
 include { ALIGNMENT       } from '../subworkflows/local/alignment/main'
@@ -43,13 +44,29 @@ workflow AUTOPOLISH {
         demuxed  = DEMUX(ch_bam_input)
         ch_reads = demuxed.reads
 
-    } else if (params.input_type == 'pod5') {
-        channel.fromPath("${params.input}/*.pod5", checkIfExists: true)
-            .map { file -> [ [id: file.baseName], file ] }
-            .set { ch_pod5 }
-        basecalled = BASECALLING(ch_pod5)
-        demuxed    = DEMUX(basecalled.bam)
-        ch_reads   = demuxed.reads
+    } else if (params.input_type in ['pod5', 'wf_basecalling']) {
+        // The run sheet names each barcode (MRSN ID) and gives the barcoding kit
+        if (!params.run_sheet) {
+            error "--input_type ${params.input_type} needs --run_sheet (the run sheet .xlsx or a sample sheet .csv)"
+        }
+        RUN_SHEET_INPUT(params.run_sheet)
+
+        if (params.input_type == 'pod5') {
+            // Dorado basecalling + demux, ported from wf-basecalling
+            ch_kit = params.barcode_kit ? channel.value(params.barcode_kit) : RUN_SHEET_INPUT.out.kit
+            DORADO_BASECALLING(
+                params.input,
+                ch_kit,
+                RUN_SHEET_INPUT.out.samples.first().map { meta -> meta.run }
+            )
+            ch_demuxed = DORADO_BASECALLING.out.bams
+        } else {
+            // Output of a separate wf-basecalling run (its --out_dir)
+            ch_demuxed = channel.fromPath("${params.input}/**.bam", checkIfExists: true)
+        }
+
+        BARCODE_READS(ch_demuxed, RUN_SHEET_INPUT.out.samples)
+        ch_reads = BARCODE_READS.out.fastq   // [ meta, MRSNxxxxxx.fastq.gz ]
     }
     
     /*

@@ -38,8 +38,8 @@ workflow DRAFT_ASSEMBLY {
         ch_reads_flat = reads
             .map { meta, fastq ->
                 def fq = fastq instanceof List ? fastq[0] : fastq
-                // Run sheet reads: the MRSN ID is meta.id.
-                // Other inputs: the sample name comes from the file name
+                // Run sheet reads (meta.run is set): the MRSN ID is meta.id.
+                // Other inputs: the sample name comes from the file name, as before.
                 def barcode = meta?.run ? meta.id : fq.name.toString()
                     .replaceAll('.fastq', '')
                     .replaceAll('.gz', '')

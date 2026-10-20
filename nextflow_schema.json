@@ -14,18 +14,15 @@
             "properties": {
                 "input": {
                     "type": "string",
-                    "format": "file-path",
+                    "format": "path",
                     "exists": true,
-                    "schema": "assets/schema_input.json",
-                    "mimetype": "text/csv",
-                    "pattern": "^\\S+\\.csv$",
-                    "description": "The input directory where the input files are located.",
-                    "help_text": "You will need to create a design file with information about the samples in your experiment before running the pipeline. Use this parameter to specify its location. It has to be a comma-separated file with 3 columns, and a header row.",
-                    "fa_icon": "fas fa-file-csv"
+                    "description": "Input folder: POD5s (pod5), BAMs (bam), FASTQs (fastq), or a wf-basecalling output folder (wf_basecalling).",
+                    "fa_icon": "fas fa-folder-open"
                 },
                 "input_type": {
                     "type": "string",
-                    "description": "Input file type: fastq, pod5, or bam"
+                    "enum": ["fastq", "pod5", "bam", "wf_basecalling"],
+                    "description": "Input file type: fastq, pod5, bam, or wf_basecalling"
                 },
                 "outdir": {
                     "type": "string",
@@ -42,34 +39,60 @@
                     "format": "directory-path",
                     "default": "/mrsnStorage/projects/Autopolish/analysis",
                     "description": "Base directory under which run-specific output folders are created when using --run_name."
-                }
-            }
-        },
-        "basecalling_demultiplexing": {
-            "title": "Basecalling & Demultiplexing",
-            "type": "object",
-            "description": "",
-            "default": "",
-            "properties": {
-                "dorado_models_dir": {
-                    "type": "string",
-                    "default": "/mrsnStorage/resources/dorado_models",
-                    "description": "Path to local Dorado models directory"
                 },
-                "dorado_model": {
+                "run_sheet": {
+                    "type": "string",
+                    "format": "file-path",
+                    "exists": true,
+                    "pattern": "^\\S+\\.(xlsx|csv)$",
+                    "description": "MinION/PromethION run sheet (.xlsx as the lab fills it in) or a sample sheet .csv",
+                    "fa_icon": "fas fa-file-excel"
+                },
+                "basecaller_cfg": {
                     "type": "string",
                     "default": "dna_r10.4.1_e8.2_400bps_sup@v5.2.0",
-                    "description": "Dorado basecalling model"
+                    "description": "Dorado model name (as in wf-basecalling)",
+                    "fa_icon": "fas fa-microchip"
+                },
+                "basecaller_model_path": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "Dorado model folder; overrides basecaller_cfg",
+                    "fa_icon": "fas fa-folder-open"
                 },
                 "barcode_kit": {
                     "type": "string",
-                    "description": "Barcode kit for demultiplexing -- required for basecalling"
+                    "pattern": "^(SQK|EXP)-[A-Z0-9]+(-[0-9]+)?$",
+                    "description": "Barcoding kit; defaults to the run sheet's 'Barcoding Kit:'",
+                    "fa_icon": "fas fa-barcode"
                 },
-                "dorado_modifications": {
-                    "type": "string",
-                    "description": "Dorado modification calling model"
+                "basecaller_chunk_size": {
+                    "type": "integer",
+                    "default": 25,
+                    "minimum": 1,
+                    "description": "POD5 files per Dorado task",
+                    "fa_icon": "fas fa-layer-group"
+                },
+                "qscore_filter": {
+                    "type": "number",
+                    "default": 10,
+                    "minimum": 0,
+                    "description": "Reads with a mean Q-score below this are not demultiplexed or assembled",
+                    "fa_icon": "fas fa-filter"
+                },
+                "watch_path": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Keep basecalling new POD5s as the run writes them (stop with --read_limit or the STOP file)",
+                    "fa_icon": "fas fa-eye"
+                },
+                "read_limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "With --watch_path: stop watching once this many reads are called",
+                    "fa_icon": "fas fa-hand-paper"
                 }
-            }
+            }    
         },
         "genome_assembly": {
             "title": "Genome Assembly",
