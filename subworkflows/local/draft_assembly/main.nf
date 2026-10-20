@@ -37,10 +37,13 @@ workflow DRAFT_ASSEMBLY {
         */
         ch_reads_flat = reads
             .map { meta, fastq ->
-                def barcode = (fastq instanceof List ? fastq[0] : fastq).name.toString()
+                def fq = fastq instanceof List ? fastq[0] : fastq
+                // Run sheet reads: the MRSN ID is meta.id.
+                // Other inputs: the sample name comes from the file name
+                def barcode = meta?.run ? meta.id : fq.name.toString()
                     .replaceAll('.fastq', '')
                     .replaceAll('.gz', '')
-                [ [id: barcode], (fastq instanceof List ? fastq[0] : fastq) ]
+                [ [id: barcode], fq ]
             }
 
         /*
@@ -102,7 +105,7 @@ workflow DRAFT_ASSEMBLY {
             ch_assembler_reads.filter      { 'miniasm' in assemblers },
             ch_assembler_genomesize.filter { 'miniasm' in assemblers }
         )
-\       myloasm_assembly   = AUTOCYCLER_MYLOASM(ch_assembler_reads.filter { 'myloasm' in assemblers })
+        myloasm_assembly   = AUTOCYCLER_MYLOASM(ch_assembler_reads.filter { 'myloasm' in assemblers })
         canu_assembly      = AUTOCYCLER_CANU(
             ch_assembler_reads.filter      { 'canu' in assemblers },
             ch_assembler_genomesize.filter { 'canu' in assemblers }
