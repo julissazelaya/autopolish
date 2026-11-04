@@ -8,7 +8,7 @@ process AUTOCYCLER_COMBINE {
         'quay.io/biocontainers/autocycler:0.8.0--h79ce301_0' }"
 
     input:
-    tuple val(meta), path(clusters, stageAs: "cluster_?/*", path(reads))
+    tuple val(meta), path(clusters, stageAs: "cluster_?/*"), path(reads)
 
     output:
     tuple val(meta), path("combine/${prefix}/consensus_assembly.fasta"), emit: fasta
