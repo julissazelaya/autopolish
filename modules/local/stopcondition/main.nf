@@ -8,7 +8,7 @@
 
 process STOPCONDITION {
     label 'process_single'
-    container 'ontresearch/wf-common:sha21d552f9910c575766e5d465fcb7b52fefda4b79'
+    container 'docker.io/ontresearch/wf-common:sha21d552f9910c575766e5d465fcb7b52fefda4b79'
 
     input:
     path json            // running total from PROGRESSIVESTATS

@@ -11,7 +11,7 @@ import nextflow.util.BlankSeparatedList
 process PROGRESSIVESTATS {
     label 'process_single'
     maxForks 1
-    container 'ontresearch/wf-common:sha21d552f9910c575766e5d465fcb7b52fefda4b79'
+    container 'docker.io/ontresearch/wf-common:sha21d552f9910c575766e5d465fcb7b52fefda4b79'
 
     input:
     path fastcat_stats

@@ -7,7 +7,7 @@ process DORADO_BASECALLER {
     tag "$meta.id"
     label 'process_gpu'
     // Same image as wf-basecalling; it ships the Dorado models under $DRD_MODELS_PATH
-    container 'ontresearch/dorado:shac8f356489fa8b44b31beba841b84d2879de2088e'
+    container 'docker.io/ontresearch/dorado:shac8f356489fa8b44b31beba841b84d2879de2088e'
 
     input:
     tuple val(meta), path(pod5s, stageAs: 'pod5/*')

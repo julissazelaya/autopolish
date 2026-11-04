@@ -6,7 +6,7 @@
 process BASECALLREPORT {
     label 'process_single'
     maxForks 1  // one at a time, so the newest report is the one published last
-    container 'ontresearch/wf-common:sha21d552f9910c575766e5d465fcb7b52fefda4b79'
+    container 'docker.io/ontresearch/wf-common:sha21d552f9910c575766e5d465fcb7b52fefda4b79'
 
     input:
     path per_read_stats     // latest running total from PROGRESSIVESTATS

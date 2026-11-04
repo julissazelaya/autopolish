@@ -5,7 +5,7 @@
 
 process BASECALLVERSIONS {
     label 'process_single'
-    container 'ontresearch/dorado:shac8f356489fa8b44b31beba841b84d2879de2088e'
+    container 'docker.io/ontresearch/dorado:shac8f356489fa8b44b31beba841b84d2879de2088e'
 
     output:
     path "versions.txt", emit: versions  // name,version lines for the basecalling report

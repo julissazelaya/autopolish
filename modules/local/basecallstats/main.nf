@@ -6,7 +6,7 @@
 process BASECALLSTATS {
     tag "$meta.id"
     label 'process_low'
-    container 'ontresearch/wf-common:sha21d552f9910c575766e5d465fcb7b52fefda4b79'
+    container 'docker.io/ontresearch/wf-common:sha21d552f9910c575766e5d465fcb7b52fefda4b79'
 
     input:
     tuple val(meta), path(cram, stageAs: 'input.cram')  // one chunk's pass reads
