@@ -78,14 +78,14 @@ def helpText() {
         --read_type         Read type passed to assemblers [default: ont_r10]
         --flye_mode         Flye assembly mode [default: --nano-hq]
         --assembler_mode    Assemblers to run [default: standard]
-                            standard  5 assemblers, 17 assemblies per sample
-                                      Flye, metaMDBG, miniasm, Raven (x4 subsets)
-                                      + Plassembler (x1, all reads)
-                            extended  6 assemblers, 21 assemblies per sample
+                            standard  6 assemblers, 21 assemblies per sample
+                                      Flye, metaMDBG, miniasm, Myloasm, Raven
+                                      (x4 subsets) + Plassembler (x1, all reads)
+                            extended  7 assemblers, 25 assemblies per sample
                                       standard + Canu (x4 subsets)
                             fast      6 assemblers, 12 assemblies per sample
-                                      Flye, metaMDBG, miniasm, Myloasm, Plassembler,
-                                      Raven (x2 subsets), as autocycler_fast.sh
+                                      same assemblers as standard, but x2 subsets
+                                      and Plassembler per subset, as autocycler_fast.sh
                             Fungi on the run sheet always get Flye only
                             (x4 subsets), then Autocycler as usual
         --metamdbg_input_type
