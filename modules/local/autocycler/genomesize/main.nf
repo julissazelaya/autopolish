@@ -4,8 +4,8 @@ process AUTOCYCLER_GENOMESIZE {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine in ['singularity', 'apptainer'] && !task.ext.singularity_pull_docker_container ?
-        'community.wave.seqera.io/library/autocycler_canu_flye_necat:8ee3f852553cb5d5' :
-        'community.wave.seqera.io/library/autocycler_canu_flye_necat:8ee3f852553cb5d5' }"
+        'docker://community.wave.seqera.io/library/autocycler_raven-assembler:53191ef8c6711fb3' :
+        'community.wave.seqera.io/library/autocycler_raven-assembler:53191ef8c6711fb3' }"
 
     input:
     tuple val(meta), path(reads)
